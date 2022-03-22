@@ -1,3 +1,4 @@
+import readline from "readline";
 import { api } from "./server";
 import { makeGetRequest, makePostRequest } from "./client";
 import { getConfig, saveConfig } from "./config";
@@ -19,10 +20,8 @@ function askForNodes(
   queriedNodes: Node[] = [],
   deadNodes: Node[] = []
 ) {
-  nodes = nodes.filter(item => !Node.contains(item, deadNodes));
+  nodes = nodes.filter((item) => !Node.contains(item, deadNodes));
   Node.nodes = Node.mergeNodes(Node.nodes, nodes, port);
-  console.log("top");
-  console.log(Node.nodes);
 
   for (const node of nodes) {
     if (node.ip === ip && node.port === port) {
@@ -35,7 +34,6 @@ function askForNodes(
     const url = new URL(`http://${node.ip}:${node.port}/addresses`);
     url.searchParams.append("ip", ip);
     url.searchParams.append("port", port.toString());
-    console.log(url.toString());
 
     makeGetRequest(url, (response: string | null) => {
       queriedNodes.push(node);
@@ -51,16 +49,50 @@ function askForNodes(
   }
 }
 
+async function addBlock() {
+  const block = new Block();
+  Block.blocks.push(block);
+}
+
+async function handleUserInput() {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  const prompt = (query: any) =>
+    new Promise((resolve) => rl.question(query, resolve));
+
+  while (true) {
+    const input: any = await prompt("\nEnter a command: ");
+    switch (input.toLowerCase()) {
+      case "nodes":
+        console.log("Known nodes:");
+        console.log(Node.nodes);
+        break;
+      case "blocks":
+        console.log("Blocks:");
+        console.log(Block.blocks);
+        break;
+      case "add block":
+        console.log("Added new block:");
+        console.log(block);
+        break;
+      default:
+        break;
+    }
+  }
+}
+
 setTimeout(async () => {
   const { knownNodes } = await getConfig();
   askForNodes(knownNodes);
 
-  const data = JSON.stringify({
-    blocks: [1, 2, 3],
-  });
-
+  Block.blocks.push(new Block());
+  const data = JSON.stringify(new Block());
   const postURL = new URL(`http://127.0.0.1:${port}/blocks`);
-  makePostRequest(postURL, data, (response: string) => console.log(response));
+  makePostRequest(postURL, data, (response: string) => {});
+
+  handleUserInput();
 }, 100);
 
 process.on("SIGINT", function () {

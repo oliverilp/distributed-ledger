@@ -1,16 +1,14 @@
 import http from "http";
+import { Block } from "./block";
 import { Node } from "./node";
 
 export const api = (port: number) => {
   const server = http.createServer(async (req: any, res: any) => {
     const url = new URL(`http://127.0.0.1${req.url}`);
-    // log(req.url);
 
-    const data = await getPostData(req);
+    const postString = await getPostString(req);
 
-    if (req.url === "/") {
-      log("Empty path");
-    } else if (req.url.startsWith("/addresses")) {
+    if (req.url.startsWith("/addresses")) {
       const ipParam = url.searchParams.get("ip");
       const portParam = url.searchParams.get("port");
       if (ipParam !== null && portParam !== null) {
@@ -22,16 +20,15 @@ export const api = (port: number) => {
           Node.nodes.push(node);
         }
 
-        // log("");
-        // console.log(Node.nodes);
-
-        // log(node.url);
         return;
       }
     } else if (req.url.startsWith("/blocks")) {
       res.writeHead(200);
-      console.log(JSON.parse(data))
-      res.end(data);
+      const temp: Block = JSON.parse(postString);
+      const block = new Block(...Object.values(temp));
+
+      Block.blocks.push(block);
+      res.end('ok');
       return
     }
 
@@ -42,7 +39,7 @@ export const api = (port: number) => {
   server.listen(port);
 };
 
-async function getPostData(req: any) {
+async function getPostString(req: any) {
   const buffers = [];
 
   for await (const chunk of req) {

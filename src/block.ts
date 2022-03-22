@@ -4,9 +4,9 @@ export class Block {
   static blocks: Block[] = [];
 
   constructor(
-    public prevHash: string,
-    public transaction: string,
-    public ts = Date.now()
+    public previousHash: string = Block.lastHash,
+    public transaction: string = `${Block.randomInteger()} €`,
+    public timeStamp = Date.now()
   ) {}
 
   get hash() {
@@ -16,11 +16,30 @@ export class Block {
     return hash.digest("hex");
   }
 
-  get lastBlock() {
+  private get copy() {
+    const copy = JSON.parse(JSON.stringify(this));
+    copy.hash = this.hash;
+    return copy
+  }
+
+  get json() {
+    return JSON.stringify(this.copy);
+  }
+
+  static get blocksJson() {
+    const blocks = Block.blocks.map(block => block.copy)
+    return JSON.stringify(blocks);
+  }
+
+  static get lastBlock() {
     return Block.blocks[Block.blocks.length - 1];
   }
 
-  addBlock() {
-     
+  static get lastHash() {
+    return Block.lastBlock !== undefined ? Block.lastBlock.hash : '';
+  }
+
+  private static randomInteger(min = 1, max = 100) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
   }
 }

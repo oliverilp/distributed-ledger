@@ -37,7 +37,6 @@ export function makePostRequest(url: URL, data: string, callback: Function) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "Content-Length": data.length,
     },
   };
 

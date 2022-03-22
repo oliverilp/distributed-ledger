@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import path from "path";
 import { port } from "./app";
+import { Block } from "./block";
 import { Node } from "./node";
 
 const fsPromises = fs.promises;
@@ -19,7 +20,7 @@ async function readFile(fileName: string): Promise<Config> {
 
     return data;
   } catch (error) {
-    console.log("Error: json file is missing.");
+    console.log("Warning: json file is missing.");
     return { knownNodes: [new Node("127.0.0.1", 10000)] };
   }
 }
@@ -43,6 +44,6 @@ export async function getConfig(): Promise<Config> {
 }
 
 export function saveConfig() {
-  const data = { knownNodes: Node.nodes };
+  const data = { knownNodes: Node.nodes, blocks: Block.blocks };
   fs.writeFileSync(getValidLocation(), JSON.stringify(data));
 }

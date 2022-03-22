@@ -4,7 +4,7 @@ import { Node } from "./node";
 export const api = (port: number) => {
   const server = http.createServer(async (req: any, res: any) => {
     const url = new URL(`http://127.0.0.1${req.url}`);
-    log(req.url);
+    // log(req.url);
 
     const data = await getPostData(req);
 
@@ -22,12 +22,17 @@ export const api = (port: number) => {
           Node.nodes.push(node);
         }
 
-        log("");
-        console.log(Node.nodes);
+        // log("");
+        // console.log(Node.nodes);
 
-        log(node.url);
+        // log(node.url);
         return;
       }
+    } else if (req.url.startsWith("/blocks")) {
+      res.writeHead(200);
+      console.log(JSON.parse(data))
+      res.end(data);
+      return
     }
 
     res.writeHead(500);

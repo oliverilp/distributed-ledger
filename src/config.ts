@@ -19,7 +19,7 @@ async function readFile(fileName: string): Promise<Config> {
 
     return data;
   } catch (error) {
-    console.log("Error: config file is missing.");
+    console.log("Error: json file is missing.");
     return { knownNodes: [new Node("127.0.0.1", 10000)] };
   }
 }

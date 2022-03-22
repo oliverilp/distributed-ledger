@@ -13,20 +13,21 @@ console.log(`Using local port: ${port}`);
 
 api(port);
 
-// Dead nodes argument
-// If connection timeouts then remove and don't add again
-function askForNodes(nodes: Node[], nodesAsked: Node[]) {
-  // nodes = dead nodes filtered out nodes
+function askForNodes(
+  nodes: Node[],
+  queriedNodes: Node[] = [],
+  deadNodes: Node[] = []
+) {
+  nodes = nodes.filter(item => !Node.contains(item, deadNodes));
   Node.nodes = Node.mergeNodes(Node.nodes, nodes, port);
   console.log("top");
   console.log(Node.nodes);
 
   for (const node of nodes) {
-    // TODO: remove this and always guarantee that self is not in list
     if (node.ip === ip && node.port === port) {
       continue;
     }
-    if (Node.contains(node, nodesAsked)) {
+    if (Node.contains(node, queriedNodes)) {
       continue;
     }
 
@@ -34,24 +35,25 @@ function askForNodes(nodes: Node[], nodesAsked: Node[]) {
     url.searchParams.append("ip", ip);
     url.searchParams.append("port", port.toString());
     console.log(url.toString());
-    
+
     makeGetRequest(url, (response: string | null) => {
-      nodesAsked.push(node);
+      queriedNodes.push(node);
       if (response === null) {
-        Node.nodes = Node.nodes.filter(item => item.url !== node.url);
+        Node.nodes = Node.nodes.filter((item) => item.url !== node.url);
+        deadNodes.push(node);
         return;
-      };
+      }
 
       const newNodes = Node.mapToNodeObjects(JSON.parse(response));
       // nodesAsked = [...nodesAsked, ...nodes];
-      askForNodes(newNodes, nodesAsked);
+      askForNodes(newNodes, queriedNodes, deadNodes);
     });
   }
 }
 
 setTimeout(async () => {
   const { knownNodes } = await getConfig();
-  askForNodes(knownNodes, []);
+  askForNodes(knownNodes);
 
   // const data = JSON.stringify({
   //   todo: 'Buy the milk',
@@ -62,7 +64,7 @@ setTimeout(async () => {
 }, 100);
 
 process.on("SIGINT", function () {
-  console.log('');
+  console.log("");
   console.log("Exiting...");
   saveConfig();
 

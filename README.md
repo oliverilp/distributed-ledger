@@ -5,5 +5,8 @@ A distributed ledgre impelemented in TypeScript and containerized with Docker.
 ## Setup
 
 ```sh
-sudo docker pull ghcr.io/oliverilp/distributed-ledger:master
+git clone git@github.com:oliverilp/distributed-ledger.git
+cd distributed-ledger
+npm install
+npm run start
 ```

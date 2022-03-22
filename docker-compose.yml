@@ -1,0 +1,9 @@
+version: "3.8"
+services:
+  distributed-server-lab:
+    image: ghcr.io/oliverilp/distributed-server-lab:main
+    container_name: distributed-server-lab
+    environment:
+      - TZ=Europe/Tallinn
+    ports:
+      - 7002:7002

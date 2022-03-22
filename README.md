@@ -8,5 +8,6 @@ A distributed ledgre impelemented in TypeScript and containerized with Docker.
 git clone git@github.com:oliverilp/distributed-ledger.git
 cd distributed-ledger
 npm install
+npm run build
 npm run start
 ```

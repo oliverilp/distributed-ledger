@@ -49,9 +49,22 @@ function askForNodes(
   }
 }
 
-async function addBlock() {
+function addBlock(): Block {
   const block = new Block();
   Block.blocks.push(block);
+
+  askForNodes(Node.nodes);
+
+  setTimeout(() => {
+    const data = JSON.stringify(block);
+  
+    for (const node of Node.nodes) {
+      const postURL = new URL(`http://${node.ip}:${node.port}/blocks`);
+      makePostRequest(postURL, data, (response: string) => { });
+    }
+  }, 0);
+
+  return block
 }
 
 async function handleUserInput() {
@@ -75,7 +88,7 @@ async function handleUserInput() {
         break;
       case "add block":
         console.log("Added new block:");
-        console.log(block);
+        console.log(addBlock());
         break;
       default:
         break;
@@ -86,11 +99,6 @@ async function handleUserInput() {
 setTimeout(async () => {
   const { knownNodes } = await getConfig();
   askForNodes(knownNodes);
-
-  Block.blocks.push(new Block());
-  const data = JSON.stringify(new Block());
-  const postURL = new URL(`http://127.0.0.1:${port}/blocks`);
-  makePostRequest(postURL, data, (response: string) => {});
 
   handleUserInput();
 }, 100);

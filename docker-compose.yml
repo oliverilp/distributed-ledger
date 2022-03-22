@@ -1,9 +1,9 @@
 version: "3.8"
 services:
-  distributed-server-lab:
-    image: ghcr.io/oliverilp/distributed-server-lab:main
-    container_name: distributed-server-lab
+  distributed-ledger:
+    image: ghcr.io/oliverilp/distributed-ledger:main
+    container_name: distributed-ledger
     environment:
       - TZ=Europe/Tallinn
     ports:
-      - 7002:7002
+      - 10000:10000

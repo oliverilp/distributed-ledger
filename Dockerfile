@@ -18,5 +18,5 @@ COPY package*.json ./
 RUN npm install --production
 COPY --from=builder /usr/app/dist ./dist
 
-EXPOSE 7002
+EXPOSE 10000
 CMD [ "npm", "run", "start" ]

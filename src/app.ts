@@ -2,6 +2,7 @@ import { api } from "./server";
 import { makeGetRequest, makePostRequest } from "./client";
 import { getConfig, saveConfig } from "./config";
 import { Node } from "./node";
+import { Block } from "./block";
 
 const ip = "127.0.0.1";
 export let port = 10000;
@@ -45,7 +46,6 @@ function askForNodes(
       }
 
       const newNodes = Node.mapToNodeObjects(JSON.parse(response));
-      // nodesAsked = [...nodesAsked, ...nodes];
       askForNodes(newNodes, queriedNodes, deadNodes);
     });
   }
@@ -55,12 +55,12 @@ setTimeout(async () => {
   const { knownNodes } = await getConfig();
   askForNodes(knownNodes);
 
-  // const data = JSON.stringify({
-  //   todo: 'Buy the milk',
-  // });
+  const data = JSON.stringify({
+    blocks: [1, 2, 3],
+  });
 
-  // const postURL = new URL(`http://127.0.0.1:${port}/post`);
-  // makePostRequest(postURL, data, (response: string) => console.log(response));
+  const postURL = new URL(`http://127.0.0.1:${port}/blocks`);
+  makePostRequest(postURL, data, (response: string) => console.log(response));
 }, 100);
 
 process.on("SIGINT", function () {

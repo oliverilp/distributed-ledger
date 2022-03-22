@@ -56,11 +56,9 @@ function addBlock(): Block {
   askForNodes(Node.nodes);
 
   setTimeout(() => {
-    const data = JSON.stringify(block);
-  
     for (const node of Node.nodes) {
       const postURL = new URL(`http://${node.ip}:${node.port}/blocks`);
-      makePostRequest(postURL, data, (response: string) => { });
+      makePostRequest(postURL, block.json, (response: string) => { });
     }
   }, 0);
 
@@ -88,7 +86,7 @@ async function handleUserInput() {
         break;
       case "add block":
         console.log("Added new block:");
-        console.log(addBlock());
+        console.log(JSON.parse(addBlock().json));
         break;
       default:
         break;

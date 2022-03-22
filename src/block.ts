@@ -4,16 +4,31 @@ export class Block {
   static blocks: Block[] = [];
 
   constructor(
-    public prevHash: string = Block.lastHash,
+    public previousHash: string = Block.lastHash,
     public transaction: string = `${Block.randomInteger()} €`,
     public timeStamp = Date.now()
   ) {}
 
   get hash() {
     const str = JSON.stringify(this);
-    const hash = crypto.createHash("MD5");
+    const hash = crypto.createHash("SHA256");
     hash.update(str).end();
     return hash.digest("hex");
+  }
+
+  private get copy() {
+    const copy = JSON.parse(JSON.stringify(this));
+    copy.hash = this.hash;
+    return copy
+  }
+
+  get json() {
+    return JSON.stringify(this.copy);
+  }
+
+  static get blocksJson() {
+    const blocks = Block.blocks.map(block => block.copy)
+    return JSON.stringify(blocks);
   }
 
   static get lastBlock() {

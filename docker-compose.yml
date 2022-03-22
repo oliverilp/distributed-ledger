@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   distributed-ledger:
-    image: ghcr.io/oliverilp/distributed-ledger:main
+    image: ghcr.io/oliverilp/distributed-ledger:master
     container_name: distributed-ledger
     environment:
       - TZ=Europe/Tallinn

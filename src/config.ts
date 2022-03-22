@@ -1,6 +1,7 @@
 import * as fs from "fs";
 import path from "path";
 import { port } from "./app";
+import { Block } from "./block";
 import { Node } from "./node";
 
 const fsPromises = fs.promises;
@@ -43,6 +44,6 @@ export async function getConfig(): Promise<Config> {
 }
 
 export function saveConfig() {
-  const data = { knownNodes: Node.nodes };
+  const data = { knownNodes: Node.nodes, blocks: Block.blocks };
   fs.writeFileSync(getValidLocation(), JSON.stringify(data));
 }

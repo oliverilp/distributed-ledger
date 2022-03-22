@@ -13,7 +13,15 @@ npm install
 npm run build
 npm run start
 ```
-## Example interaction with the application
+## Interaction with the application
+
+Running `npm run start` will open up an interactive dialogue where the following commands can be used:
+
+* `nodes`
+* `blocks`
+* `add block`
+
+For example:
 
 ```
 npm run start                 

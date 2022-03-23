@@ -2,6 +2,9 @@ import http from "http";
 import { Block } from "./block";
 import { Node } from "./node";
 
+/**
+ * Run a server on the specified port.
+ */
 export const api = (port: number) => {
   const server = http.createServer(async (req: any, res: any) => {
     const url = new URL(`http://127.0.0.1${req.url}`);

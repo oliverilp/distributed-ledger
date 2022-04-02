@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import path from "path";
 import { port } from "./app";
-import { Block } from "./models//block";
+import { Block } from "./models/block";
 import { Node } from "./models/node";
 
 const fsPromises = fs.promises;

@@ -10,16 +10,13 @@ NB! Make sure you are running node.js 16 or higher. The code uses syntax not pre
 git clone git@github.com:oliverilp/distributed-ledger.git
 cd distributed-ledger
 npm install
-npm run build
-npm run start
+npm run dev
 ```
 ## Interaction with the application
 
 Running `npm run start` will open up an interactive dialogue where the following commands can be used:
 
-* `nodes`
-* `blocks`
-* `add block`
+* `add`
 
 For example:
 

@@ -1,15 +1,21 @@
+import { uiSetNodes } from "../ui";
+
 export class Node {
-  ip: string;
-  port: number;
-  static nodes: Node[] = [];
+  private static _nodes: Node[] = [];
+
+  constructor(public ip: string, public port: number) { }
+
+  static get nodes() {
+    return this._nodes;
+  }
+
+  static set nodes(nodes: Node[]) {
+    this._nodes = nodes;
+    uiSetNodes(Node.nodes)
+  }
 
   get url(): string {
     return `http://${this.ip}:${this.port}`;
-  }
-
-  constructor(ip: string, port: number) {
-    this.ip = ip;
-    this.port = port;
   }
 
   static contains(node: Node, nodes: Node[]): boolean {

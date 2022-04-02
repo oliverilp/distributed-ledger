@@ -2,8 +2,8 @@ import readline from "readline";
 import { api } from "./server";
 import { makeGetRequest, makePostRequest } from "./client";
 import { getConfig, saveConfig } from "./config";
-import { Node } from "./node";
-import { Block } from "./block";
+import { Node } from "./models/node";
+import { Block } from "./models/block";
 
 const ip = "127.0.0.1";
 export let port = 10000;
@@ -11,9 +11,6 @@ const args = process.argv.slice(2);
 if (args.length > 0) {
   port = parseInt(args[0]);
 }
-console.log(`Using local port: ${port}`);
-
-api(port);
 
 function askForNodes(
   nodes: Node[],
@@ -49,9 +46,9 @@ function askForNodes(
   }
 }
 
-function addBlock(): Block {
+export function addBlock(): Block {
   const block = new Block();
-  Block.blocks.push(block);
+  Block.blocks = [...Block.blocks, block];
 
   askForNodes(Node.nodes);
 
@@ -65,41 +62,16 @@ function addBlock(): Block {
   return block
 }
 
-async function handleUserInput() {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-  const prompt = (query: any) =>
-    new Promise((resolve) => rl.question(query, resolve));
+export function runApp() {
+  api(port);
 
-  while (true) {
-    const input: any = await prompt("\nEnter a command: ");
-    switch (input.toLowerCase()) {
-      case "nodes":
-        console.log("Known nodes:");
-        console.log(Node.nodes);
-        break;
-      case "blocks":
-        console.log("Blocks:");
-        console.log(Block.blocks);
-        break;
-      case "add block":
-        console.log("Added new block:");
-        console.log(JSON.parse(addBlock().json));
-        break;
-      default:
-        break;
-    }
-  }
+  setTimeout(async () => {
+    const { knownNodes } = await getConfig();
+    askForNodes(knownNodes);
+
+    // handleUserInput();
+  }, 100);
 }
-
-setTimeout(async () => {
-  const { knownNodes } = await getConfig();
-  askForNodes(knownNodes);
-
-  handleUserInput();
-}, 100);
 
 process.on("SIGINT", function () {
   console.log("");

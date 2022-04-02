@@ -1,13 +1,23 @@
 import * as crypto from 'crypto';
+import { uiSetBlocks } from '../ui';
 
 export class Block {
-  static blocks: Block[] = [];
+  private static _blocks: Block[] = [];
+
+  static get blocks() {
+    return this._blocks;
+  }
+
+  static set blocks(blocks) {
+    this._blocks = blocks;
+    uiSetBlocks(Block.blocks);
+  }
 
   constructor(
     public previousHash: string = Block.lastHash,
     public transaction: string = `${Block.randomInteger()} €`,
     public timeStamp = Date.now()
-  ) {}
+  ) { }
 
   get hash() {
     const str = JSON.stringify(this);

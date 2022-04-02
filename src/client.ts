@@ -22,7 +22,7 @@ export function makeGetRequest(url: URL, callback: Function) {
   });
 
   req.on("error", (error: any) => {
-    console.error(error.code);
+    // console.error(error.code);
     callback(null);
   });
 
@@ -54,7 +54,8 @@ export function makePostRequest(url: URL, data: string, callback: Function) {
   });
 
   req.on("error", (error) => {
-    console.error(error);
+    // console.error(error);
+    callback(null);
   });
 
   req.write(data);

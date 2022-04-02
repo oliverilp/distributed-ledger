@@ -1,6 +1,6 @@
 import http from "http";
-import { Block } from "./block";
-import { Node } from "./node";
+import { Block } from "./models/block";
+import { Node } from "./models/node";
 
 /**
  * Run a server on the specified port.
@@ -21,7 +21,7 @@ export const api = (port: number) => {
 
         const node = new Node(ipParam, parseInt(portParam));
         if (!Node.contains(node, Node.nodes)) {
-          Node.nodes.push(node);
+          Node.nodes = [...Node.nodes, node];
         }
         return;
       }
@@ -44,7 +44,7 @@ export const api = (port: number) => {
         const temp: Block = JSON.parse(postString);
         const block = new Block(...Object.values(temp));
         if (block.hash === temp.hash) {
-          Block.blocks.push(block);
+          Block.blocks = [...Block.blocks, block];
         }
       }
       res.setHeader('Content-Type', 'application/json');

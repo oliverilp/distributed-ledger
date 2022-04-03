@@ -6,6 +6,9 @@
 		"moduleResolution": "node",
 		"jsx": "react",
 		"esModuleInterop": true,
+    "strict": true,
+    "alwaysStrict": true,
+    "noImplicitAny": true,
 		"outDir": "dist"
 	},
 	"include": ["src/**/*"]

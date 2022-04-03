@@ -9,6 +9,10 @@
       "strict": true,
       "alwaysStrict": true,
       "noImplicitAny": true,
+      "noFallthroughCasesInSwitch": true,
+      "noUnusedParameters": true,
+      "noUnusedLocals": true,
+      "noImplicitReturns": true,
       "outDir": "dist"
     },
     "include": ["src/**/*"]

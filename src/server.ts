@@ -13,10 +13,13 @@ export const startApi = (port: number) => {
 
     if (req.url.startsWith("/addresses")) {
       getAddresses(res, url);
-    } else if (req.url.startsWith('/block?')) {
+      return;
+    } else if(req.url.startsWith('/block?')) {
       getBlock(res, url);
+      return;
     } else if (req.url.startsWith("/blocks")) {
       saveBlock(res, contents);
+      return;
     }
 
     res.writeHead(500);
@@ -38,7 +41,6 @@ function getAddresses(res: any, url: URL) {
     if (!Node.contains(node, Node.nodes)) {
       Node.nodes = [...Node.nodes, node];
     }
-    return;
   }
 }
 
@@ -54,7 +56,6 @@ function getBlock(res: any, url: URL) {
 
     res.writeHead(200);
     res.end(block?.json);
-    return;
   }
 }
 
@@ -69,7 +70,6 @@ function saveBlock(res: any, contents: string) {
   res.setHeader('Content-Type', 'application/json');
   res.writeHead(200);
   res.end(Block.blocksJson);
-  return;
 }
 
 async function getContents(req: any) {

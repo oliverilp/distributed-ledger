@@ -52,7 +52,7 @@ export function addBlock(): Block {
   setTimeout(async () => {
     for (const node of Node.nodes) {
       const postURL = new URL(`http://${node.ip}:${node.port}/blocks`);
-      await makePostRequest(postURL, block.json);
+      makePostRequest(postURL, block.json);
     }
   }, 0);
 

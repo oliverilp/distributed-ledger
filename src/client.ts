@@ -21,7 +21,7 @@ export function makeGetRequest(url: URL, callback: Function) {
     });
   });
 
-  req.on("error", (error: any) => {
+  req.on("error", () => {
     // console.error(error.code);
     callback(null);
   });
@@ -53,15 +53,11 @@ export function makePostRequest(url: URL, data: string, callback: Function) {
     });
   });
 
-  req.on("error", (error) => {
+  req.on("error", () => {
     // console.error(error);
     callback(null);
   });
 
   req.write(data);
   req.end();
-}
-
-function log(message: string) {
-  console.log(`[Client] ${message}`);
 }

@@ -1,4 +1,3 @@
-import readline from "readline";
 import { api } from "./server";
 import { makeGetRequest, makePostRequest } from "./client";
 import { getConfig, saveConfig } from "./config";
@@ -55,7 +54,7 @@ export function addBlock(): Block {
   setTimeout(() => {
     for (const node of Node.nodes) {
       const postURL = new URL(`http://${node.ip}:${node.port}/blocks`);
-      makePostRequest(postURL, block.json, (response: string) => { });
+      makePostRequest(postURL, block.json, () => { });
     }
   }, 0);
 

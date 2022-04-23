@@ -3,11 +3,13 @@ import { render, Box, Text, Newline } from 'ink';
 import TextInput from 'ink-text-input';
 
 import { addBlock, runApp } from './app';
+import { Node } from './models/node';
+import { Block } from './models/block';
 
 runApp();
 
-export let uiSetNodes: React.Dispatch<React.SetStateAction<any[]>>;
-export let uiSetBlocks: React.Dispatch<React.SetStateAction<any[]>>;
+export let uiSetNodes: any;
+export let uiSetBlocks: any;
 
 const UI = () => {
   const [nodes, setNodes] = useState([]);
@@ -35,7 +37,7 @@ const UI = () => {
           </Text>
           <Box borderStyle="single" width={25}>
             <Text>
-              {nodes.map(node =>
+              {nodes.map((node: Node) =>
                 <Text key={node.port}>
                   {nodes[0] === node ? null : <Newline />}
                   {` ${node.ip}:${node.port} `}
@@ -49,7 +51,7 @@ const UI = () => {
             Blocks
           </Text>
           <Box borderStyle="single" flexDirection="column">
-            {blocks.map(block =>
+            {blocks.map((block: Block) =>
               <Box key={block.hash} paddingX={1}>
                 <Text key={block.hash} wrap="truncate">
                   {block.hash}

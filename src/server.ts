@@ -69,7 +69,3 @@ async function getPostString(req: any) {
 
   return Buffer.concat(buffers).toString();
 }
-
-function log(message: any) {
-  console.log(`[Server] ${message}`);
-}

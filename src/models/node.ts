@@ -22,6 +22,7 @@ export class Node {
     return nodes.some((item) => item.url === node.url);
   }
 
+  // TODO: For duplicates replace old node with new node
   static mergeNodes(oldNodes: Node[], newNodes: Node[], port: number): Node[] {
     const filtered = newNodes.filter(
       (node) => !Node.contains(node, oldNodes) && node.port !== port

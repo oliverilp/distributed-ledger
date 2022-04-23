@@ -1,4 +1,4 @@
-import { api } from "./server";
+import { startApi } from "./server";
 import { makeGetRequest, makePostRequest } from "./client";
 import { getConfig, saveConfig } from "./config";
 import { Node } from "./models/node";
@@ -11,12 +11,12 @@ if (args.length > 0) {
   port = parseInt(args[0]);
 }
 
-function askForNodes(
+async function askForNodes(
   nodes: Node[],
   queriedNodes: Node[] = [],
   deadNodes: Node[] = []
 ) {
-  nodes = nodes.filter((item) => !Node.contains(item, deadNodes));
+  nodes = nodes.filter((node) => !Node.contains(node, deadNodes));
   Node.nodes = Node.mergeNodes(Node.nodes, nodes, port);
 
   for (const node of nodes) {
@@ -31,17 +31,15 @@ function askForNodes(
     url.searchParams.append("ip", ip);
     url.searchParams.append("port", port.toString());
 
-    makeGetRequest(url, (response: string | null) => {
+    try {
+      const response = await makeGetRequest(url);
       queriedNodes.push(node);
-      if (response === null) {
-        Node.nodes = Node.nodes.filter((item) => item.url !== node.url);
-        deadNodes.push(node);
-        return;
-      }
-
       const newNodes = Node.mapToNodeObjects(JSON.parse(response));
       askForNodes(newNodes, queriedNodes, deadNodes);
-    });
+    } catch (error) {
+      Node.nodes = Node.nodes.filter((item) => item.url !== node.url);
+      deadNodes.push(node);
+    }
   }
 }
 
@@ -51,10 +49,10 @@ export function addBlock(): Block {
 
   askForNodes(Node.nodes);
 
-  setTimeout(() => {
+  setTimeout(async () => {
     for (const node of Node.nodes) {
       const postURL = new URL(`http://${node.ip}:${node.port}/blocks`);
-      makePostRequest(postURL, block.json, () => { });
+      await makePostRequest(postURL, block.json);
     }
   }, 0);
 
@@ -62,13 +60,11 @@ export function addBlock(): Block {
 }
 
 export function runApp() {
-  api(port);
+  startApi(port);
 
   setTimeout(async () => {
     const { knownNodes } = await getConfig();
     askForNodes(knownNodes);
-
-    // handleUserInput();
   }, 100);
 }
 

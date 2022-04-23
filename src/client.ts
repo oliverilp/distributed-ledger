@@ -1,63 +1,63 @@
 import http from "http";
 
-export function makeGetRequest(url: URL, callback: Function) {
-  const options = {
-    hostname: url.hostname,
-    port: url.port,
-    path: url.pathname + url.search,
-    method: "GET",
-  };
+export function makeGetRequest(url: URL) {
+  return new Promise<string>((resolve, reject) => {
+    const options = {
+      hostname: url.hostname,
+      port: url.port,
+      path: url.pathname + url.search,
+      method: "GET",
+    };
 
-  const req = http.request(options, (res) => {
-    // log(`statusCode: ${res.statusCode}`);
-    let result = "";
+    const req = http.request(options, (res) => {
+      let result = "";
 
-    res.on("data", (data) => {
-      result += data;
+      res.on("data", (data) => {
+        result += data;
+      });
+
+      res.on("end", () => {
+        resolve(result);
+      });
     });
 
-    res.on("end", () => {
-      callback(result);
+    req.on("error", (error) => {
+      reject(error);
     });
-  });
 
-  req.on("error", () => {
-    // console.error(error.code);
-    callback(null);
+    req.end();
   });
-
-  req.end();
 }
 
-export function makePostRequest(url: URL, data: string, callback: Function) {
-  const options = {
-    hostname: url.hostname,
-    port: url.port,
-    path: url.pathname + url.search,
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  };
-
-  const req = http.request(options, (res) => {
-    // log(`statusCode: ${res.statusCode}`);
-    let result = "";
-
-    res.on("data", (data) => {
-      result += data;
+export function makePostRequest(url: URL, data: string) {
+  return new Promise<string>((resolve, reject) => {
+    const options = {
+      hostname: url.hostname,
+      port: url.port,
+      path: url.pathname + url.search,
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    };
+  
+    const req = http.request(options, (res) => {
+      let result = "";
+  
+      res.on("data", (data) => {
+        result += data;
+      });
+  
+      res.on("end", () => {
+        resolve(result);
+      });
     });
-
-    res.on("end", () => {
-      callback(result);
+  
+    req.on("error", (error) => {
+      reject(error);
     });
+  
+    req.write(data);
+    req.end();
   });
-
-  req.on("error", () => {
-    // console.error(error);
-    callback(null);
-  });
-
-  req.write(data);
-  req.end();
 }

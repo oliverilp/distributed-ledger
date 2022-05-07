@@ -1,9 +1,11 @@
 import http from "http";
+import * as crypto from 'crypto';
 import { Block } from "./models/block";
 import { Node } from "./models/node";
-import { ip, port } from "./app";
-import Wallet from "./models/wallet";
+import { port } from "./app";
 import { INode } from "./domain/INode";
+import { ITransactionDto } from "./domain/ITransactionDto";
+import { Chain } from "./models/chain";
 
 /**
  * Run a server on the specified port.
@@ -19,6 +21,9 @@ export const startApi = () => {
       return;
     } else if (req.url.startsWith("/node-info")) {
       saveNodeInfo(res, contents);
+      return;
+    } else if (req.url.startsWith("/transaction")) {
+      saveTransaction(res, contents);
       return;
     } else if (req.url.startsWith('/block?')) {
       getBlock(res, url);
@@ -42,7 +47,7 @@ function getNodeInfo(res: any, url: URL) {
   res.end(Node.instance.json);
 }
 
-function saveNodeInfo(res: any, contents: string) {  
+function saveNodeInfo(res: any, contents: string) {
   if (contents) {
     res.setHeader('Content-Type', 'application/json');
     res.writeHead(200);
@@ -57,10 +62,29 @@ function saveNodeInfo(res: any, contents: string) {
   }
 }
 
+function saveTransaction(res: any, contents: string) {
+  if (contents) {
+    res.setHeader('Content-Type', 'application/json');
+    res.writeHead(200);
+    res.end(contents);
+
+    const dto: ITransactionDto = JSON.parse(contents);
+
+    const verify = crypto.createVerify('SHA256');
+    verify.update(JSON.stringify(dto.transaction));
+    const buffer = Buffer.from(dto.signature);
+
+    const isValid = verify.verify(dto.transaction.sender, buffer);
+    if (isValid) {
+      Chain.instance.addBlock(dto.transaction);
+    }
+  }
+}
+
 function getBlock(res: any, url: URL) {
   const hash = url.searchParams.get("hash");
   if (hash) {
-    const block = Block.blocks.find(item => item.hash === hash);
+    const block = Chain.instance.blocks.find(item => item.hash === hash);
     res.setHeader('Content-Type', 'application/json');
     if (!block) {
       res.writeHead(404);
@@ -75,14 +99,14 @@ function getBlock(res: any, url: URL) {
 function saveBlock(res: any, contents: string) {
   if (contents) {
     const temp: Block = JSON.parse(contents);
-    const block = new Block(temp.previousHash, temp.transaction, temp.timeStamp);
+    const block = new Block(temp.previousHash, temp.transaction, temp.timestamp);
     if (block.hash === temp.hash) {
-      Block.blocks = [...Block.blocks, block];
+      Chain.instance.blocks = [...Chain.instance.blocks, block];
     }
   }
   res.setHeader('Content-Type', 'application/json');
   res.writeHead(200);
-  res.end(Block.blocksJson);
+  res.end(JSON.stringify(Chain.instance.blocks));
 }
 
 async function getContents(req: any) {

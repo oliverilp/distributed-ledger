@@ -1,9 +1,15 @@
-export default class Transaction {
+import { ITransaction } from "../domain/ITransaction";
+
+export default class Transaction implements ITransaction {
+  public timestamp: string;
+
   constructor(
     public amount: number,
-    public payer: string, // public key
-    public payee: string // public key
-  ) { }
+    public sender: string, // public key
+    public receiver: string // public key
+  ) {
+    this.timestamp = new Date().toISOString();
+  }
 
   toString() {
     return JSON.stringify(this);

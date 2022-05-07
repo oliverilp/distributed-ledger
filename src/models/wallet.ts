@@ -1,4 +1,6 @@
 import * as crypto from 'crypto';
+import { ITransactionDto } from '../domain/ITransactionDto';
+import Transaction from './transaction';
 
 export default class Wallet {
   public static instance = new Wallet();
@@ -27,13 +29,16 @@ export default class Wallet {
     return { publicKey: this.publicKey }
   }
 
-  // sendMoney(amount: number, payeePublicKey: string) {
-  //   const transaction = new Transaction(amount, this.publicKey, payeePublicKey);
+  createTransaction(amount: number, receiverPublicKey: string): ITransactionDto {
+    const transaction = new Transaction(amount, this.publicKey, receiverPublicKey);
 
-  //   const sign = crypto.createSign('SHA256');
-  //   sign.update(transaction.toString()).end();
+    const sign = crypto.createSign('SHA256');
+    sign.update(transaction.toString()).end();
+    const signature = sign.sign(this.privateKey);
 
-  //   const signature = sign.sign(this.privateKey);
-  //   Chain.instance.addBlock(transaction, this.publicKey, signature);
-  // }
+    return {
+      transaction,
+      signature
+    }
+  }
 }

@@ -7,6 +7,7 @@ import { setTimeout } from 'timers/promises';
 import Transaction from "./models/transaction";
 import Wallet from "./models/wallet";
 import { INode } from "./domain/INode";
+import { Chain } from "./models/chain";
 
 export const ip = "127.0.0.1";
 export let port = 10000;
@@ -50,22 +51,7 @@ async function askForNodes(
   }
 }
 
-export async function addBlock(): Promise<Block> {
-  const block = new Block(Block.lastHash, new Transaction(20, '1', '2'));
-  Block.blocks = [...Block.blocks, block];
-
-  askForNodes(Node.instance.knownNodes);
-  await setTimeout(0);
-
-  for (const node of Node.instance.knownNodes) {
-    const postURL = new URL(`http://${node.ip}:${node.port}/blocks`);
-    makePostRequest(postURL, block.json);
-  }
-
-  return block
-}
-
-// export async function sendWallet(): Promise<void> {
+// export async function addBlock(): Promise<Block> {
 //   const block = new Block(Block.lastHash, new Transaction(20, '1', '2'));
 //   Block.blocks = [...Block.blocks, block];
 
@@ -76,19 +62,35 @@ export async function addBlock(): Promise<Block> {
 //     const postURL = new URL(`http://${node.ip}:${node.port}/blocks`);
 //     makePostRequest(postURL, block.json);
 //   }
+
+//   return block
 // }
+
+export async function sendMoney(amount: number, receiverPublicKey: string) {
+  const dto = Wallet.instance.createTransaction(amount, receiverPublicKey);
+  
+  askForNodes(Node.instance.knownNodes);
+  await setTimeout(0);
+
+  for (const node of Node.instance.knownNodes) {
+    const postURL = new URL(`http://${node.ip}:${node.port}/transaction`);
+    makePostRequest(postURL, JSON.stringify(dto));
+  }
+}
 
 export async function runApp() {
   startApi();
   await setTimeout(100);
 
-  const { knownNodes, blocks, wallet } = await getConfig();
+  const { knownNodes, chain, wallet } = await getConfig();
   if (wallet) {
     Wallet.instance = new Wallet(wallet.publicKey, wallet.privateKey);
   }
-  Node.instance = new Node(ip, port, Wallet.instance.publicKey);
+  if (chain) {
+    Chain.instance = Chain.mapToChainObject(chain);
+  }
 
-  Block.blocks = Block.mapToBlockObjects(blocks);
+  Node.instance = new Node(ip, port, Wallet.instance.publicKey);
 
   askForNodes(knownNodes);
 }

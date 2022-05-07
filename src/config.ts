@@ -2,7 +2,7 @@ import * as fs from "fs";
 import path from "path";
 import { port } from "./app";
 import { IConfig } from "./domain/IConfig";
-import { Block } from "./models/block";
+import { Chain } from "./models/chain";
 import { Node } from "./models/node";
 import Wallet from "./models/wallet";
 
@@ -18,8 +18,7 @@ async function readFile(fileName: string): Promise<IConfig> {
     return data;
   } catch (error) {
     return {
-      knownNodes: [],
-      blocks: []
+      knownNodes: []
     };
   }
 }
@@ -45,7 +44,7 @@ export async function getConfig(): Promise<IConfig> {
 export function saveConfig() {
   const data = { 
     knownNodes: Node.instance.knownNodes, 
-    blocks: Block.blocks,
+    chain: Chain.instance.copy,
     wallet: Wallet.instance
   };
   fs.writeFileSync(getValidLocation(), JSON.stringify(data, null, 4));

@@ -1,27 +1,26 @@
 import * as fs from "fs";
 import path from "path";
 import { port } from "./app";
+import { IConfig } from "./domain/IConfig";
 import { Block } from "./models/block";
 import { Node } from "./models/node";
+import Wallet from "./models/wallet";
 
 const fsPromises = fs.promises;
 
-interface Config {
-  knownNodes: Node[];
-}
-
 const fileName = `config.json`;
 
-async function readFile(fileName: string): Promise<Config> {
+async function readFile(fileName: string): Promise<IConfig> {
   try {
     const file = await fsPromises.readFile(fileName, { encoding: "utf8" });
     const data = JSON.parse(file);
-    data.knownNodes = Node.mapToNodeObjects(data.knownNodes);
 
     return data;
   } catch (error) {
-    // console.log("Warning: json file is missing.");
-    return { knownNodes: [new Node("127.0.0.1", 10000)] };
+    return {
+      knownNodes: [],
+      blocks: []
+    };
   }
 }
 
@@ -35,7 +34,7 @@ function getValidLocation() {
   return path.join(directory, `node-${port}.json`);
 }
 
-export async function getConfig(): Promise<Config> {
+export async function getConfig(): Promise<IConfig> {
   const config = await readFile(fileName);
   const data = await readFile(getValidLocation());
   data.knownNodes = Node.mergeNodes(config.knownNodes, data.knownNodes, port);
@@ -44,6 +43,10 @@ export async function getConfig(): Promise<Config> {
 }
 
 export function saveConfig() {
-  const data = { knownNodes: Node.nodes, blocks: Block.blocks };
-  fs.writeFileSync(getValidLocation(), JSON.stringify(data));
+  const data = { 
+    knownNodes: Node.instance.knownNodes, 
+    blocks: Block.blocks,
+    wallet: Wallet.instance
+  };
+  fs.writeFileSync(getValidLocation(), JSON.stringify(data, null, 4));
 }

@@ -3,8 +3,12 @@ import { makeGetRequest, makePostRequest } from "./client";
 import { getConfig, saveConfig } from "./config";
 import { Node } from "./models/node";
 import { Block } from "./models/block";
+import { setTimeout } from 'timers/promises';
+import Transaction from "./models/transaction";
+import Wallet from "./models/wallet";
+import { INode } from "./domain/INode";
 
-const ip = "127.0.0.1";
+export const ip = "127.0.0.1";
 export let port = 10000;
 const args = process.argv.slice(2);
 if (args.length > 0) {
@@ -12,12 +16,14 @@ if (args.length > 0) {
 }
 
 async function askForNodes(
-  nodes: Node[],
-  queriedNodes: Node[] = [],
-  deadNodes: Node[] = []
+  nodes: INode[],
+  queriedNodes: INode[] = [],
+  deadNodes: INode[] = []
 ) {
+
   nodes = nodes.filter((node) => !Node.contains(node, deadNodes));
-  Node.nodes = Node.mergeNodes(Node.nodes, nodes, port);
+  Node.instance.knownNodes = Node.mergeNodes(Node.instance.knownNodes, nodes, port);
+  Node.instance.knownNodes.forEach((node: INode) => delete node.knownNodes);
 
   for (const node of nodes) {
     if (node.ip === ip && node.port === port) {
@@ -27,45 +33,64 @@ async function askForNodes(
       continue;
     }
 
-    const url = new URL(`http://${node.ip}:${node.port}/addresses`);
-    url.searchParams.append("ip", ip);
-    url.searchParams.append("port", port.toString());
+    const url = new URL(`http://${node.ip}:${node.port}/node-info`);
 
     try {
-      const response = await makeGetRequest(url);
+      const response: INode = JSON.parse(await makeGetRequest(url));
+      makePostRequest(url, Node.instance.json);
+
       queriedNodes.push(node);
-      const newNodes = Node.mapToNodeObjects(JSON.parse(response));
-      askForNodes(newNodes, queriedNodes, deadNodes);
+      Node.instance.knownNodes = Node.mergeNodes(Node.instance.knownNodes, [response], port);
+
+      askForNodes(response.knownNodes!, queriedNodes, deadNodes);
     } catch (error) {
-      Node.nodes = Node.nodes.filter((item) => item.url !== node.url);
+      Node.instance.knownNodes = Node.instance.knownNodes.filter((item) => item.url !== node.url);
       deadNodes.push(node);
     }
   }
 }
 
-export function addBlock(): Block {
-  const block = new Block();
+export async function addBlock(): Promise<Block> {
+  const block = new Block(Block.lastHash, new Transaction(20, '1', '2'));
   Block.blocks = [...Block.blocks, block];
 
-  askForNodes(Node.nodes);
+  askForNodes(Node.instance.knownNodes);
+  await setTimeout(0);
 
-  setTimeout(async () => {
-    for (const node of Node.nodes) {
-      const postURL = new URL(`http://${node.ip}:${node.port}/blocks`);
-      makePostRequest(postURL, block.json);
-    }
-  }, 0);
+  for (const node of Node.instance.knownNodes) {
+    const postURL = new URL(`http://${node.ip}:${node.port}/blocks`);
+    makePostRequest(postURL, block.json);
+  }
 
   return block
 }
 
-export function runApp() {
-  startApi(port);
+// export async function sendWallet(): Promise<void> {
+//   const block = new Block(Block.lastHash, new Transaction(20, '1', '2'));
+//   Block.blocks = [...Block.blocks, block];
 
-  setTimeout(async () => {
-    const { knownNodes } = await getConfig();
-    askForNodes(knownNodes);
-  }, 100);
+//   askForNodes(Node.instance.knownNodes);
+//   await setTimeout(0);
+
+//   for (const node of Node.instance.knownNodes) {
+//     const postURL = new URL(`http://${node.ip}:${node.port}/blocks`);
+//     makePostRequest(postURL, block.json);
+//   }
+// }
+
+export async function runApp() {
+  startApi();
+  await setTimeout(100);
+
+  const { knownNodes, blocks, wallet } = await getConfig();
+  if (wallet) {
+    Wallet.instance = new Wallet(wallet.publicKey, wallet.privateKey);
+  }
+  Node.instance = new Node(ip, port, Wallet.instance.publicKey);
+
+  Block.blocks = Block.mapToBlockObjects(blocks);
+
+  askForNodes(knownNodes);
 }
 
 process.on("SIGINT", function () {

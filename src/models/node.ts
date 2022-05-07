@@ -1,36 +1,48 @@
+import { INode } from "../domain/INode";
 import { uiSetNodes } from "../ui";
 
-export class Node {
-  private static _nodes: Node[] = [];
+export class Node implements INode {
+  public static instance: Node;
+  private _knownNodes: INode[] = [];
 
-  constructor(public ip: string, public port: number) { }
+  constructor(
+    public ip: string,
+    public port: number,
+    public publicKey: string
+  ) { }
 
-  static get nodes() {
-    return this._nodes;
+  get knownNodes() {
+    return this._knownNodes;
   }
 
-  static set nodes(nodes: Node[]) {
-    this._nodes = nodes;
-    uiSetNodes(Node.nodes)
+  set knownNodes(nodes: INode[]) {
+    this._knownNodes = nodes;
+    uiSetNodes(this.knownNodes);
   }
 
   get url(): string {
     return `http://${this.ip}:${this.port}`;
   }
 
-  static contains(node: Node, nodes: Node[]): boolean {
+  get json() {
+    const object = JSON.parse(JSON.stringify(this));
+    object.url = this.url;
+    delete object._knownNodes;
+    object.knownNodes = JSON.parse(JSON.stringify(this._knownNodes));;
+    object.knownNodes.forEach((node: INode) => delete node.knownNodes);
+    return JSON.stringify(object);
+  }
+
+  static contains(node: INode, nodes: INode[]): boolean {
     return nodes.some((item) => item.url === node.url);
   }
 
-  // TODO: For duplicates replace old node with new node
-  static mergeNodes(oldNodes: Node[], newNodes: Node[], port: number): Node[] {
-    const filtered = newNodes.filter(
-      (node) => !Node.contains(node, oldNodes) && node.port !== port
+  static mergeNodes(oldNodes: INode[], newNodes: INode[], port: number): INode[] {
+    const filtered = oldNodes.filter(
+      (node: INode) => !Node.contains(node, newNodes)
     );
-    return [...oldNodes, ...filtered];
-  }
 
-  static mapToNodeObjects(nodes: any): Node[] {
-    return nodes.map((item: any) => new Node(item.ip, item.port));
+    const output = [...filtered, ...newNodes.filter(node => node.port !== port)];
+    return output;
   }
 }

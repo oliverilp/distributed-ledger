@@ -1,5 +1,6 @@
 import * as crypto from 'crypto';
 import { uiSetBlocks } from '../ui';
+import Transaction from './transaction';
 
 export class Block {
   private static _blocks: Block[] = [];
@@ -13,9 +14,11 @@ export class Block {
     uiSetBlocks(Block.blocks);
   }
 
+  public nonce = 0;
+
   constructor(
-    public previousHash: string = Block.lastHash,
-    public transaction: string = `${Block.randomInteger()} €`,
+    public previousHash: string,
+    public transaction: Transaction,
     public timeStamp = Date.now()
   ) { }
 
@@ -47,6 +50,14 @@ export class Block {
 
   static get lastHash() {
     return Block.lastBlock !== undefined ? Block.lastBlock.hash : '';
+  }
+
+  static mapToBlockObjects(blocks: any): Block[] {
+    return blocks.map((item: any) => new Block(
+      item.previousHash,
+      item.transaction,
+      item.timeStamp
+    ));
   }
 
   private static randomInteger(min = 1, max = 100) {

@@ -1,7 +1,14 @@
 import http from "http";
+import net from 'node:net';
 
 export function makeGetRequest(url: URL) {
-  return new Promise<string>((resolve, reject) => {
+  return new Promise<string>(async (resolve, reject) => {
+    const reachable = await isPortReachable(parseInt(url.port), url.hostname);
+    if (!reachable) {
+      reject('Error: Not reachable');
+      return;
+    }
+
     const options = {
       hostname: url.hostname,
       port: url.port,
@@ -30,7 +37,13 @@ export function makeGetRequest(url: URL) {
 }
 
 export function makePostRequest(url: URL, data: string) {
-  return new Promise<string>((resolve, reject) => {
+  return new Promise<string>(async (resolve, reject) => {
+    const reachable = await isPortReachable(parseInt(url.port), url.hostname);
+    if (!reachable) {
+      reject('Error: Not reachable');
+      return;
+    }
+
     const options = {
       hostname: url.hostname,
       port: url.port,
@@ -60,4 +73,31 @@ export function makePostRequest(url: URL, data: string) {
     req.write(data);
     req.end();
   });
+}
+
+export async function isPortReachable(port: number, host: string, timeout = 500) {
+  const promise = new Promise<void>((resolve, reject) => {
+    const socket = new net.Socket();
+
+    const onError = () => {
+      socket.destroy();
+      reject();
+    };
+
+    socket.setTimeout(timeout);
+    socket.once('error', onError);
+    socket.once('timeout', onError);
+
+    socket.connect(port, host, () => {
+      socket.end();
+      resolve();
+    });
+  });
+
+  try {
+    await promise;
+    return true;
+  } catch {
+    return false;
+  }
 }

@@ -1,6 +1,6 @@
 export interface ITransaction {
   amount: number;
-  sender: string; 
-  receiver: string;
+  sender: string; // public key
+  receiver: string; // public key
   timestamp: string;
 }

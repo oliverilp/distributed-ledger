@@ -1,9 +1,11 @@
-import { ITransaction } from "./ITransaction";
+import { ICoinbase } from "./ICoinbase";
+import { ISignedTransaction } from "./ISignedTransaction";
 
 export interface IBlock {
   nonce: number;
-  previousHash: string; 
-  transaction: ITransaction;
+  previousHash: string;
+  coinbase: ICoinbase; // public key
+  signedTransaction: ISignedTransaction;
   timestamp: string;
   hash: string;
 }

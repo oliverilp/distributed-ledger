@@ -1,13 +1,14 @@
 import { startApi } from "./server";
-import { makeGetRequest, makePostRequest } from "./client";
+import { isPortReachable, makeGetRequest, makePostRequest } from "./client";
 import { getConfig, saveConfig } from "./config";
 import { Node } from "./models/node";
-import { Block } from "./models/block";
 import { setTimeout } from 'timers/promises';
-import Transaction from "./models/transaction";
 import Wallet from "./models/wallet";
 import { INode } from "./domain/INode";
 import { Chain } from "./models/chain";
+import { ISignedTransaction } from "./domain/ISignedTransaction";
+import { IChain } from "./domain/IChain";
+import { uiSetBlocks } from "./ui";
 
 export const ip = "127.0.0.1";
 export let port = 10000;
@@ -38,7 +39,7 @@ async function askForNodes(
 
     try {
       const response: INode = JSON.parse(await makeGetRequest(url));
-      makePostRequest(url, Node.instance.json);
+      await makePostRequest(url, Node.instance.json);
 
       queriedNodes.push(node);
       Node.instance.knownNodes = Node.mergeNodes(Node.instance.knownNodes, [response], port);
@@ -51,34 +52,44 @@ async function askForNodes(
   }
 }
 
-// export async function addBlock(): Promise<Block> {
-//   const block = new Block(Block.lastHash, new Transaction(20, '1', '2'));
-//   Block.blocks = [...Block.blocks, block];
-
-//   askForNodes(Node.instance.knownNodes);
-//   await setTimeout(0);
-
-//   for (const node of Node.instance.knownNodes) {
-//     const postURL = new URL(`http://${node.ip}:${node.port}/blocks`);
-//     makePostRequest(postURL, block.json);
-//   }
-
-//   return block
-// }
-
-export async function sendMoney(amount: number, receiverPublicKey: string) {
+export async function sendTransaction(amount: number, receiverPublicKey: string) {
   const dto = Wallet.instance.createTransaction(amount, receiverPublicKey);
-  
-  askForNodes(Node.instance.knownNodes);
-  await setTimeout(0);
 
   for (const node of Node.instance.knownNodes) {
-    const postURL = new URL(`http://${node.ip}:${node.port}/transaction`);
-    makePostRequest(postURL, JSON.stringify(dto));
+    const url = new URL(`http://${node.ip}:${node.port}/transaction`);
+    const reachable = await isPortReachable(parseInt(url.port), url.hostname);
+    if (reachable) {
+      makePostRequest(url, JSON.stringify(dto));
+    }
+  }
+}
+
+export async function sendBlock(signedTransaction: ISignedTransaction) {
+  const block = await Chain.instance.addBlock(signedTransaction);
+
+  for (const node of Node.instance.knownNodes) {
+    const url = new URL(`http://${node.ip}:${node.port}/blocks`);
+    const reachable = await isPortReachable(parseInt(url.port), url.hostname);
+    if (reachable) {
+      makePostRequest(url, block.json);
+    }
+  }
+}
+
+async function syncChainWithNodes() {
+  for (const node of Node.instance.knownNodes) {
+    const url = new URL(`http://${node.ip}:${node.port}/blocks`);
+    const chain: IChain = JSON.parse(await makeGetRequest(url));
+    if (chain.blocks.length > Chain.instance.blocks.length) {
+      Chain.instance = Chain.mapToChainObject(chain);
+      uiSetBlocks(Chain.instance.blocks);
+    }
   }
 }
 
 export async function runApp() {
+  console.log('Starting app.');
+
   startApi();
   await setTimeout(100);
 
@@ -88,16 +99,21 @@ export async function runApp() {
   }
   if (chain) {
     Chain.instance = Chain.mapToChainObject(chain);
+    uiSetBlocks(Chain.instance.blocks);
   }
 
   Node.instance = new Node(ip, port, Wallet.instance.publicKey);
 
   askForNodes(knownNodes);
+
+  await setTimeout(0);
+  syncChainWithNodes();
 }
 
 process.on("SIGINT", function () {
   console.log("");
   console.log("Exiting...");
+  Chain.instance.killChild();
   saveConfig();
 
   process.exit();

@@ -1,13 +1,15 @@
 import * as crypto from 'crypto';
 import { IBlock } from '../domain/IBlock';
-import Transaction from './transaction';
+import { ICoinbase } from '../domain/ICoinbase';
+import { ISignedTransaction } from '../domain/ISignedTransaction';
+import { Chain } from './chain';
 
 export class Block implements IBlock {
-  public nonce = 0;
-
   constructor(
     public previousHash: string,
-    public transaction: Transaction,
+    public coinbase: ICoinbase,
+    public signedTransaction: ISignedTransaction,
+    public nonce = 0,
     public timestamp = new Date().toISOString()
   ) { }
 
@@ -26,5 +28,23 @@ export class Block implements IBlock {
 
   get json() {
     return JSON.stringify(this.copy);
+  }
+
+  static isValid(block: Block, temp: IBlock): boolean {
+    return (
+      block.hash === temp.hash &&
+      block.hash.startsWith('00000') &&
+      block.previousHash === Chain.instance.lastHash
+    );
+  }
+
+  static mapToBlockObject(block: IBlock): Block {
+    return new Block(
+      block.previousHash,
+      block.coinbase,
+      block.signedTransaction,
+      block.nonce,
+      block.timestamp
+    );
   }
 }

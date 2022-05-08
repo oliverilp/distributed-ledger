@@ -1,13 +1,19 @@
+import cp from 'child_process';
+import path from 'path';
+
 import { IBlock } from '../domain/IBlock';
 import { IChain } from '../domain/IChain';
+import { ICoinbase } from '../domain/ICoinbase';
+import { ISignedTransaction } from '../domain/ISignedTransaction';
 import { uiSetBlocks } from '../ui';
 import { Block } from "./block";
-import Transaction from "./transaction";
+import Wallet from './wallet';
 
 export class Chain implements IChain {
   public static instance = new Chain();
 
   private _blocks: Block[] = [];
+  private child: cp.ChildProcess | null = null;
 
   get blocks() {
     return this._blocks;
@@ -18,44 +24,49 @@ export class Chain implements IChain {
     uiSetBlocks(this.blocks);
   }
 
-  constructor() {
-    this._blocks = [
-      // Genesis block
-      new Block('', new Transaction(100, 'genesis', 'satoshi'))
-    ];
+  get lastHash() {
+    return this.blocks[this.blocks.length - 1]?.hash || '';
   }
 
-  get lastBlock() {
-    return this._blocks[this._blocks.length - 1];
+  async mine(block: Block): Promise<Block> {
+    this.killChild();
+    return new Promise<Block>((resolve, reject) => {
+      this.child = cp.fork(path.join(__dirname, '../miner.js'));
+      this.child.send(block.json);
+
+      this.child.on('message', (msg: string) => {
+        const minedBlock = Block.mapToBlockObject(JSON.parse(msg));
+        resolve(minedBlock);
+      });
+    });
   }
 
-  mine(block: Block) {
-    console.log('⛏️  mining...')
+  async addBlock(signedTransaction: ISignedTransaction): Promise<Block> {
+    const coinbase: ICoinbase = {
+      amount: 50,
+      receiver: Wallet.instance.publicKey
+    };
+    const block = new Block(this.lastHash, coinbase, signedTransaction);
+    const minedBlock = await this.mine(block);
 
-    while (true) {
-      if (block.hash.startsWith('00000')) {
-        console.log(`Solved: ${block.nonce}`);
-        console.log(block.hash);
-        return block.nonce;
-      }
+    this.blocks = [...this._blocks, minedBlock];
+    return minedBlock;
+  }
 
-      block.nonce += 1;
+  // TODO: Reject promise
+  killChild() {
+    if (this.child) {
+      this.child.kill();
     }
-  }
-
-  addBlock(transaction: Transaction) {
-    const block = new Block(this.lastBlock.hash, transaction);
-    this.mine(block);
-
-    this.blocks = [...this._blocks, block];
   }
 
   get copy() {
     const object = JSON.parse(JSON.stringify(this));
     object.blocks = object._blocks;
     delete object._blocks;
-    object.lastBlock = JSON.parse(JSON.stringify(this.lastBlock));
-    
+    delete object.child;
+    object.lastHash = JSON.parse(JSON.stringify(this.lastHash));
+
     return object;
   }
 
@@ -68,7 +79,9 @@ export class Chain implements IChain {
 
     result._blocks = chain.blocks.map((block: IBlock) => new Block(
       block.previousHash,
-      block.transaction,
+      block.coinbase,
+      block.signedTransaction,
+      block.nonce,
       block.timestamp
     ))
 

@@ -2,10 +2,11 @@ import http from "http";
 import * as crypto from 'crypto';
 import { Block } from "./models/block";
 import { Node } from "./models/node";
-import { port } from "./app";
+import { port, sendBlock } from "./app";
 import { INode } from "./domain/INode";
-import { ITransactionDto } from "./domain/ITransactionDto";
+import { ISignedTransaction } from "./domain/ISignedTransaction";
 import { Chain } from "./models/chain";
+import { IBlock } from "./domain/IBlock";
 
 /**
  * Run a server on the specified port.
@@ -25,8 +26,8 @@ export const startApi = () => {
     } else if (req.url.startsWith("/transaction")) {
       saveTransaction(res, contents);
       return;
-    } else if (req.url.startsWith('/block?')) {
-      getBlock(res, url);
+    } else if (req.url.startsWith('/blocks') && !contents) {
+      getBlocksList(res);
       return;
     } else if (req.url.startsWith("/blocks")) {
       saveBlock(res, contents);
@@ -68,42 +69,35 @@ function saveTransaction(res: any, contents: string) {
     res.writeHead(200);
     res.end(contents);
 
-    const dto: ITransactionDto = JSON.parse(contents);
+    const signedTransaction: ISignedTransaction = JSON.parse(contents);
+    const { transaction, signature } = signedTransaction;
 
     const verify = crypto.createVerify('SHA256');
-    verify.update(JSON.stringify(dto.transaction));
-    const buffer = Buffer.from(dto.signature);
+    verify.update(JSON.stringify(transaction));
+    const buffer = Buffer.from(signature);
 
-    const isValid = verify.verify(dto.transaction.sender, buffer);
+    const isValid = verify.verify(transaction.sender, buffer);
     if (isValid) {
-      Chain.instance.addBlock(dto.transaction);
+      sendBlock(signedTransaction);
     }
   }
 }
 
-function getBlock(res: any, url: URL) {
-  const hash = url.searchParams.get("hash");
-  if (hash) {
-    const block = Chain.instance.blocks.find(item => item.hash === hash);
-    res.setHeader('Content-Type', 'application/json');
-    if (!block) {
-      res.writeHead(404);
-      res.end('null');
-    }
-
-    res.writeHead(200);
-    res.end(block?.json);
-  }
+function getBlocksList(res: any) {
+  res.writeHead(200);
+  res.end(Chain.instance.json);
 }
 
 function saveBlock(res: any, contents: string) {
   if (contents) {
-    const temp: Block = JSON.parse(contents);
-    const block = new Block(temp.previousHash, temp.transaction, temp.timestamp);
-    if (block.hash === temp.hash) {
+    const temp: IBlock = JSON.parse(contents);
+    const block = Block.mapToBlockObject(temp);
+    if (Block.isValid(block, temp)) {
       Chain.instance.blocks = [...Chain.instance.blocks, block];
+      Chain.instance.killChild();
     }
   }
+
   res.setHeader('Content-Type', 'application/json');
   res.writeHead(200);
   res.end(JSON.stringify(Chain.instance.blocks));

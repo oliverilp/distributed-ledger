@@ -1,5 +1,5 @@
 import * as crypto from 'crypto';
-import { ITransactionDto } from '../domain/ITransactionDto';
+import { ISignedTransaction } from '../domain/ISignedTransaction';
 import Transaction from './transaction';
 
 export default class Wallet {
@@ -29,7 +29,7 @@ export default class Wallet {
     return { publicKey: this.publicKey }
   }
 
-  createTransaction(amount: number, receiverPublicKey: string): ITransactionDto {
+  createTransaction(amount: number, receiverPublicKey: string): ISignedTransaction {
     const transaction = new Transaction(amount, this.publicKey, receiverPublicKey);
 
     const sign = crypto.createSign('SHA256');

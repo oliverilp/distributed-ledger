@@ -1,6 +1,6 @@
 import { ITransaction } from "./ITransaction";
 
-export interface ITransactionDto {
+export interface ISignedTransaction {
   transaction: ITransaction;
   signature: Buffer;
 }

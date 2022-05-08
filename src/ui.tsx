@@ -2,12 +2,10 @@ import React, { useState } from 'react';
 import { render, Box, Text, Newline } from 'ink';
 import TextInput from 'ink-text-input';
 
-import { runApp, sendMoney } from './app';
+import { runApp, sendTransaction } from './app';
 import { Block } from './models/block';
 import SelectInput from 'ink-select-input/build';
 import { INode } from './domain/INode';
-
-runApp();
 
 export let uiSetNodes: any;
 export let uiSetBlocks: any;
@@ -129,7 +127,7 @@ const ChooseNode = (props: any) => {
   )
 }
 
-const ChooseAmount = (props: {node: INode, setIndex: any}) => {
+const ChooseAmount = (props: { node: INode, setIndex: any }) => {
   const { node, setIndex } = props;
   const [value, setvalue] = useState('');
 
@@ -140,7 +138,7 @@ const ChooseAmount = (props: {node: INode, setIndex: any}) => {
       setvalue('');
       setIndex(0);
 
-      sendMoney(amount, node.publicKey);
+      sendTransaction(amount, node.publicKey);
     }
   };
 
@@ -159,4 +157,7 @@ const ChooseAmount = (props: {node: INode, setIndex: any}) => {
   )
 }
 
-render(<UI />);
+if (!process.send) {
+  runApp();
+  render(<UI />);
+}

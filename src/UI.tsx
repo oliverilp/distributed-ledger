@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { render, Box, Text, Newline } from 'ink';
 import TextInput from 'ink-text-input';
 
-import { runApp, sendTransaction } from './app';
-import { Block } from './models/block';
+import { runApp, sendTransaction } from './App';
+import { Block } from './models/Block';
 import SelectInput from 'ink-select-input/build';
 import { INode } from './domain/INode';
 
@@ -88,7 +88,7 @@ const ChooseAction = (props: any) => {
 
   const items = [
     {
-      label: 'Add block',
+      label: 'Add empty block (coming soon)',
       value: 'addBlock'
     },
     {

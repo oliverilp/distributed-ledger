@@ -1,5 +1,5 @@
 import { INode } from "../domain/INode";
-import { uiSetNodes } from "../ui";
+import { uiSetNodes } from "../UI";
 
 export class Node implements INode {
   public static instance: Node;

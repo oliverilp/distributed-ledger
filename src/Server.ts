@@ -1,12 +1,13 @@
 import http from "http";
 import * as crypto from 'crypto';
-import { Block } from "./models/block";
-import { Node } from "./models/node";
-import { port, sendBlock } from "./app";
+import { Block } from "./models/Block";
+import { Node } from "./models/Node";
+import { collectTransaction, port } from "./App";
 import { INode } from "./domain/INode";
 import { ISignedTransaction } from "./domain/ISignedTransaction";
-import { Chain } from "./models/chain";
+import { Chain } from "./models/Chain";
 import { IBlock } from "./domain/IBlock";
+import TransactionQueue from "./models/TransactionQueue";
 
 /**
  * Run a server on the specified port.
@@ -78,7 +79,7 @@ function saveTransaction(res: any, contents: string) {
 
     const isValid = verify.verify(transaction.sender, buffer);
     if (isValid) {
-      sendBlock(signedTransaction);
+      collectTransaction(signedTransaction);
     }
   }
 }
@@ -95,6 +96,7 @@ function saveBlock(res: any, contents: string) {
     if (Block.isValid(block, temp)) {
       Chain.instance.blocks = [...Chain.instance.blocks, block];
       Chain.instance.killChild();
+      TransactionQueue.instance.queue = [];
     }
   }
 

@@ -2,13 +2,13 @@ import * as crypto from 'crypto';
 import { IBlock } from '../domain/IBlock';
 import { ICoinbase } from '../domain/ICoinbase';
 import { ISignedTransaction } from '../domain/ISignedTransaction';
-import { Chain } from './chain';
+import { Chain } from './Chain';
 
 export class Block implements IBlock {
   constructor(
     public previousHash: string,
     public coinbase: ICoinbase,
-    public signedTransaction: ISignedTransaction,
+    public signedTransactionList: ISignedTransaction[],
     public nonce = 0,
     public timestamp = new Date().toISOString()
   ) { }
@@ -42,7 +42,7 @@ export class Block implements IBlock {
     return new Block(
       block.previousHash,
       block.coinbase,
-      block.signedTransaction,
+      block.signedTransactionList,
       block.nonce,
       block.timestamp
     );

@@ -1,4 +1,4 @@
-import Wallet from "../models/wallet";
+import Wallet from "../models/Wallet";
 import { IChain } from "./IChain";
 import { INode } from "./INode";
 

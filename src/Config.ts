@@ -1,10 +1,10 @@
 import * as fs from "fs";
 import path from "path";
-import { port } from "./app";
+import { port } from "./App";
 import { IConfig } from "./domain/IConfig";
-import { Chain } from "./models/chain";
-import { Node } from "./models/node";
-import Wallet from "./models/wallet";
+import { Chain } from "./models/Chain";
+import { Node } from "./models/Node";
+import Wallet from "./models/Wallet";
 
 const fsPromises = fs.promises;
 

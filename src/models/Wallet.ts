@@ -1,6 +1,6 @@
 import * as crypto from 'crypto';
 import { ISignedTransaction } from '../domain/ISignedTransaction';
-import Transaction from './transaction';
+import Transaction from './Transaction';
 
 export default class Wallet {
   public static instance = new Wallet();

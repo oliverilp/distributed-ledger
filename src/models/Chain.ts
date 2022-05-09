@@ -5,9 +5,9 @@ import { IBlock } from '../domain/IBlock';
 import { IChain } from '../domain/IChain';
 import { ICoinbase } from '../domain/ICoinbase';
 import { ISignedTransaction } from '../domain/ISignedTransaction';
-import { uiSetBlocks } from '../ui';
-import { Block } from "./block";
-import Wallet from './wallet';
+import { uiSetBlocks } from '../UI';
+import { Block } from "./Block";
+import Wallet from './Wallet';
 
 export class Chain implements IChain {
   public static instance = new Chain();
@@ -41,12 +41,12 @@ export class Chain implements IChain {
     });
   }
 
-  async addBlock(signedTransaction: ISignedTransaction): Promise<Block> {
+  async addBlock(signedTransactionList: ISignedTransaction[]): Promise<Block> {
     const coinbase: ICoinbase = {
       amount: 50,
       receiver: Wallet.instance.publicKey
     };
-    const block = new Block(this.lastHash, coinbase, signedTransaction);
+    const block = new Block(this.lastHash, coinbase, signedTransactionList);
     const minedBlock = await this.mine(block);
 
     this.blocks = [...this._blocks, minedBlock];
@@ -80,7 +80,7 @@ export class Chain implements IChain {
     result._blocks = chain.blocks.map((block: IBlock) => new Block(
       block.previousHash,
       block.coinbase,
-      block.signedTransaction,
+      block.signedTransactionList,
       block.nonce,
       block.timestamp
     ))

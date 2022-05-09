@@ -1,14 +1,15 @@
-import { startApi } from "./server";
-import { isPortReachable, makeGetRequest, makePostRequest } from "./client";
-import { getConfig, saveConfig } from "./config";
-import { Node } from "./models/node";
+import { startApi } from "./Server";
+import { isPortReachable, makeGetRequest, makePostRequest } from "./Client";
+import { getConfig, saveConfig } from "./Config";
+import { Node } from "./models/Node";
 import { setTimeout } from 'timers/promises';
-import Wallet from "./models/wallet";
+import Wallet from "./models/Wallet";
 import { INode } from "./domain/INode";
-import { Chain } from "./models/chain";
+import { Chain } from "./models/Chain";
 import { ISignedTransaction } from "./domain/ISignedTransaction";
 import { IChain } from "./domain/IChain";
-import { uiSetBlocks } from "./ui";
+import { uiSetBlocks } from "./UI";
+import TransactionQueue from "./models/TransactionQueue";
 
 export const ip = "127.0.0.1";
 export let port = 10000;
@@ -62,10 +63,22 @@ export async function sendTransaction(amount: number, receiverPublicKey: string)
       makePostRequest(url, JSON.stringify(dto));
     }
   }
+
+  collectTransaction(dto);
 }
 
-export async function sendBlock(signedTransaction: ISignedTransaction) {
-  const block = await Chain.instance.addBlock(signedTransaction);
+export async function collectTransaction(signedTransaction: ISignedTransaction) {
+  const { queue } = TransactionQueue.instance;
+  queue.push(signedTransaction);
+
+  if (queue.length === 5) {
+    sendBlock(queue);
+    TransactionQueue.instance.queue = [];
+  }
+}
+
+export async function sendBlock(signedTransactionList: ISignedTransaction[]) {
+  const block = await Chain.instance.addBlock(signedTransactionList);
 
   for (const node of Node.instance.knownNodes) {
     const url = new URL(`http://${node.ip}:${node.port}/blocks`);

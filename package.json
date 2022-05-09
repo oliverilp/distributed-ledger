@@ -7,7 +7,7 @@
 	"scripts": {
 		"build": "tsc -p .",
 		"dev": "tsc && npm run start",
-		"start": "node dist/ui.js"
+		"start": "node dist/UI.js"
 	},
 	"dependencies": {
 		"ink": "^3.2.0",

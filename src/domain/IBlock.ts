@@ -5,7 +5,7 @@ export interface IBlock {
   nonce: number;
   previousHash: string;
   coinbase: ICoinbase; // public key
-  signedTransaction: ISignedTransaction;
+  signedTransactionList: ISignedTransaction[];
   timestamp: string;
   hash: string;
 }

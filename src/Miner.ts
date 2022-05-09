@@ -1,4 +1,4 @@
-import { Block } from "./models/block";
+import { Block } from "./models/Block";
 
 process.on('message', (msg: string) => {
   const block = Block.mapToBlockObject(JSON.parse(msg));

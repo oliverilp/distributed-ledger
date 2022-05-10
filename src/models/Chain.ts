@@ -1,5 +1,6 @@
 import cp from 'child_process';
 import path from 'path';
+import crypto from 'crypto'
 
 import { IBlock } from '../domain/IBlock';
 import { IChain } from '../domain/IChain';
@@ -46,6 +47,7 @@ export class Chain implements IChain {
       amount: 50,
       receiver: Wallet.instance.publicKey
     };
+    const merkelRoot = Chain.computeMerkelRoot(signedTransactionList)
     const block = new Block(this.lastHash, coinbase, signedTransactionList);
     const minedBlock = await this.mine(block);
 
@@ -87,4 +89,37 @@ export class Chain implements IChain {
 
     return result;
   }
+
+  static computeMerkelRoot(signedTransactionList: ISignedTransaction[]): string {
+    return merkelRoot(signedTransactionList.map( t => t.hash))
+  }
+}
+
+function merkelRoot(hashes: string[]): string {
+  if (hashes.length === 0) throw Error("No transactions...");
+  if (hashes.length === 1) return sha256(hashes[0]);
+  const pairs = pairer(hashes);
+  const nHashes = pairs.map(p => sha256(p.reduce(function(prev, cur) {return prev+cur}, "")));
+  return merkelRoot(nHashes);
+}
+
+function sha256(content: string): string {
+  const hash = crypto.createHash("SHA256");
+  hash.update(content).end();
+  return hash.digest("hex");
+}
+
+function pairer<T>(sequence: T[]): T[][] {
+  let ar: T[][] = []
+  let result = sequence.reduce(function(result, _value, index, array) {
+    if (index % 2 === 0)
+    result.push(array.slice(index, index + 2));
+    return result;
+  }, ar);
+  if (result.length === 0) return []
+  const lastElement = result[result.length-1]
+  if (lastElement.length === 1) {
+    lastElement.push(lastElement[0])
+  }
+  return result
 }

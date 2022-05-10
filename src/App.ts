@@ -37,8 +37,8 @@ async function askForNodes(
     }
 
     const url = new URL(`http://${node.ip}:${node.port}/node-info`);
-
-    try {
+    const reachable = await isPortReachable(parseInt(url.port), url.hostname);
+    if (reachable) {
       const response: INode = JSON.parse(await makeGetRequest(url));
       await makePostRequest(url, Node.instance.json);
 
@@ -46,7 +46,7 @@ async function askForNodes(
       Node.instance.knownNodes = Node.mergeNodes(Node.instance.knownNodes, [response], port);
 
       askForNodes(response.knownNodes!, queriedNodes, deadNodes);
-    } catch (error) {
+    } else {
       Node.instance.knownNodes = Node.instance.knownNodes.filter((item) => item.url !== node.url);
       deadNodes.push(node);
     }
@@ -123,7 +123,7 @@ export async function runApp() {
   syncChainWithNodes();
 }
 
-process.on("SIGINT", function () {
+process.on("SIGINT", () => {
   console.log("");
   console.log("Exiting...");
   Chain.instance.killChild();

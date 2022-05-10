@@ -32,7 +32,7 @@ export class Chain implements IChain {
   async mine(block: Block): Promise<Block> {
     this.killChild();
     return new Promise<Block>((resolve, reject) => {
-      this.child = cp.fork(path.join(__dirname, '../miner.js'));
+      this.child = cp.fork(path.join(__dirname, '../Miner.js'));
       this.child.send(block.json);
 
       this.child.on('message', (msg: string) => {

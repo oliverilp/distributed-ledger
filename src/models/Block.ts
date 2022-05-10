@@ -35,7 +35,8 @@ export class Block implements IBlock {
     return (
       block.hash === temp.hash &&
       block.hash.startsWith('00000') &&
-      block.previousHash === Chain.instance.lastHash
+      block.previousHash === Chain.instance.lastHash &&
+      block.merkleRoot === Chain.computeMerkleRoot(block.signedTransactionList)
     );
   }
 

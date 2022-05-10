@@ -8,6 +8,7 @@ export class Block implements IBlock {
   constructor(
     public previousHash: string,
     public coinbase: ICoinbase,
+    public merkleRoot: string,
     public signedTransactionList: ISignedTransaction[],
     public nonce = 0,
     public timestamp = new Date().toISOString()
@@ -42,6 +43,7 @@ export class Block implements IBlock {
     return new Block(
       block.previousHash,
       block.coinbase,
+      block.merkleRoot,
       block.signedTransactionList,
       block.nonce,
       block.timestamp

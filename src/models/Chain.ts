@@ -47,8 +47,14 @@ export class Chain implements IChain {
       amount: 50,
       receiver: Wallet.instance.publicKey
     };
-    const merkleRoot = Chain.computeMerkleRoot(signedTransactionList)
-    const block = new Block(this.lastHash, coinbase, signedTransactionList);
+    const merkleRoot = Chain.computeMerkleRoot(signedTransactionList);
+    const block = new Block(
+      this.lastHash,
+      coinbase,
+      merkleRoot,
+      signedTransactionList
+    );
+
     const minedBlock = await this.mine(block);
 
     this.blocks = [...this._blocks, minedBlock];
@@ -82,6 +88,7 @@ export class Chain implements IChain {
     result._blocks = chain.blocks.map((block: IBlock) => new Block(
       block.previousHash,
       block.coinbase,
+      block.merkleRoot,
       block.signedTransactionList,
       block.nonce,
       block.timestamp
@@ -91,7 +98,8 @@ export class Chain implements IChain {
   }
 
   static computeMerkleRoot(signedTransactionList: ISignedTransaction[]): string {
-    return merkleRoot(signedTransactionList.map( t => t.hash))
+    const hashes = signedTransactionList.map(t => sha256(JSON.stringify(t)));
+    return merkleRoot(hashes);
   }
 }
 
@@ -102,7 +110,7 @@ function merkleRoot(hashes: string[]): string {
   if (hashes.length === 0) throw Error("No transactions...");
   if (hashes.length === 1) return sha256(hashes[0]);
   const pairs = pairer(hashes);
-  const nHashes = pairs.map(p => sha256(p.reduce(function(prev, cur) {return prev+cur}, "")));
+  const nHashes = pairs.map(p => sha256(p.reduce((prev, cur) => prev + cur, "")));
   return merkleRoot(nHashes);
 }
 
@@ -118,16 +126,16 @@ function sha256(content: string): string {
  * the last element will be paired with itself.
  */
 function pairer<T>(sequence: T[]): T[][] {
-  let ar: T[][] = []
-  let result = sequence.reduce(function(result, _value, index, array) {
+  let ar: T[][] = [];
+  let result = sequence.reduce((result, _value, index, array) => {
     if (index % 2 === 0)
-    result.push(array.slice(index, index + 2));
+      result.push(array.slice(index, index + 2));
     return result;
   }, ar);
-  if (result.length === 0) return []
-  const lastElement = result[result.length-1]
+  if (result.length === 0) return [];
+  const lastElement = result[result.length - 1];
   if (lastElement.length === 1) {
-    lastElement.push(lastElement[0])
+    lastElement.push(lastElement[0]);
   }
-  return result
+  return result;
 }

@@ -6,6 +6,7 @@ import { runApp, sendTransaction } from './App';
 import { Block } from './models/Block';
 import SelectInput from 'ink-select-input/build';
 import { INode } from './domain/INode';
+import { Balance } from './models/Balance';
 
 export let uiSetNodes: any;
 export let uiSetBlocks: any;
@@ -72,7 +73,7 @@ const ChooseAction = (props: any) => {
   const handleSelect = (item: any) => {
     switch (item.value) {
       case 'addBlock':
-        // addBlock();
+        Balance.instance.updateEveryBalance();
         break;
       case 'sendMoney':
         setWallets(nodes.map((node: any) => (

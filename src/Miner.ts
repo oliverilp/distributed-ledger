@@ -3,7 +3,7 @@ import { Block } from "./models/Block";
 process.on('message', (msg: string) => {
   const block = Block.mapToBlockObject(JSON.parse(msg));
 
-  while (!block.hash.startsWith('00000')) {
+  while (!block.hash.startsWith('0000')) {
     block.nonce += 1;
   }
 

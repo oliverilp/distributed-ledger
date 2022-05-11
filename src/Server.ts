@@ -1,5 +1,4 @@
 import http from "http";
-import * as crypto from 'crypto';
 import { Block } from "./models/Block";
 import { Node } from "./models/Node";
 import { collectTransaction, port } from "./App";
@@ -8,6 +7,7 @@ import { ISignedTransaction } from "./domain/ISignedTransaction";
 import { Chain } from "./models/Chain";
 import { IBlock } from "./domain/IBlock";
 import TransactionQueue from "./models/TransactionQueue";
+import { logAddEmptyNewBlock, logAddNewBlock, logRejectNewBlock } from "./Logger";
 
 /**
  * Run a server on the specified port.
@@ -71,20 +71,12 @@ function saveTransaction(res: any, contents: string) {
     res.end(contents);
 
     const signedTransaction: ISignedTransaction = JSON.parse(contents);
-    const { transaction, signature } = signedTransaction;
-
-    const verify = crypto.createVerify('SHA256');
-    verify.update(JSON.stringify(transaction));
-    const buffer = Buffer.from(signature);
-
-    const isValid = verify.verify(transaction.sender, buffer);
-    if (isValid) {
-      collectTransaction(signedTransaction);
-    }
+    collectTransaction(signedTransaction);
   }
 }
 
 function getBlocksList(res: any) {
+  res.setHeader('Content-Type', 'application/json');
   res.writeHead(200);
   res.end(Chain.instance.json);
 }
@@ -94,9 +86,17 @@ function saveBlock(res: any, contents: string) {
     const temp: IBlock = JSON.parse(contents);
     const block = Block.mapToBlockObject(temp);
     if (Block.isValid(block, temp)) {
+      if (block.signedTransactionList.length === 0) {
+        logAddEmptyNewBlock(block.hash);
+      } else {
+        logAddNewBlock(block.hash);
+      }
+
       Chain.instance.blocks = [...Chain.instance.blocks, block];
       Chain.instance.killChild();
       TransactionQueue.instance.queue = [];
+    } else {
+      logRejectNewBlock(block.hash);
     }
   }
 

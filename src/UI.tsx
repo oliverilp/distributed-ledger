@@ -2,20 +2,33 @@ import React, { useState } from 'react';
 import { render, Box, Text, Newline } from 'ink';
 import TextInput from 'ink-text-input';
 
-import { runApp, sendTransaction } from './App';
-import { Block } from './models/Block';
+import { runApp, sendEmptyBlock, sendTransaction } from './App';
 import SelectInput from 'ink-select-input/build';
 import { INode } from './domain/INode';
 import { Balance } from './models/Balance';
+import Wallet from './models/Wallet';
+import { Color, IConsoleItem } from './domain/IConsoleItem';
+import { IBlock } from './domain/IBlock';
 
+export function uiAddConsoleLine(text: string, color: Color = Color.White) {
+  const item: IConsoleItem = { text, color }
+  uiSetConsoleItems([...uiConsoleItems, item]);
+}
+
+let uiConsoleItems: any;
+let uiSetConsoleItems: any;
 export let uiSetNodes: any;
 export let uiSetBlocks: any;
 
 const UI = () => {
+  const [consoleItems, setConsoleItems] = useState<IConsoleItem[]>([]);
+  uiConsoleItems = consoleItems;
+  uiSetConsoleItems = setConsoleItems;
+
   const [nodes, setNodes] = useState<INode[]>([]);
   uiSetNodes = setNodes;
 
-  const [blocks, setBlocks] = useState([]);
+  const [blocks, setBlocks] = useState<IBlock[]>([]);
   uiSetBlocks = setBlocks;
 
   let [wallets, setWallets]: any = useState([]);
@@ -29,41 +42,51 @@ const UI = () => {
   ];
 
   return (
-    <>
-      <Box flexDirection="row">
-        <Box flexDirection="column" height="100%">
-          <Text>
-            Nodes
+    <Box flexDirection="column" marginY={1}>
+      <Box flexDirection="column" marginBottom={1}>
+        {consoleItems.map((item, index) =>
+          <Text key={index} color={item.color}>
+            {item.text}
           </Text>
-          <Box borderStyle="single" width={25}>
-            <Text>
-              {nodes.map(node =>
-                <Text key={node.port}>
-                  {nodes[0] === node ? null : <Newline />}
-                  {` ${node.ip}:${node.port} `}
-                </Text>
-              )}
-            </Text>
-          </Box>
-        </Box>
-        <Box flexDirection="column" flexGrow={1} height="100%">
-          <Text>
-            Blocks
-          </Text>
-          <Box borderStyle="single" flexDirection="column">
-            {blocks.map((block: Block) =>
-              <Box key={block.hash} paddingX={1}>
-                <Text key={block.hash} wrap="truncate">
-                  {block.hash}
-                </Text>
-              </Box>
-            )}
-          </Box>
-        </Box>
+        )}
       </Box>
+      <Text backgroundColor="white" color="black">
+        {` Your balance is ${Balance.instance.getPretty(Wallet.instance.publicKey)} `}
+      </Text>
+      <Box flexDirection="column" marginTop={1}>
+        <Box flexDirection="row">
+          <Box flexDirection="column" height="100%" width="30%">
+            <Text>
+              Nodes
+            </Text>
+            <Box borderStyle="single" flexDirection="column">
+              {nodes.map((node, index) =>
+                <Box key={index} justifyContent="space-between">
+                  <Text>{` ${node.ip}:${node.port}`}</Text>
+                  <Text color="green">{`${Balance.instance.getPretty(node.publicKey)}`}</Text>
+                </Box>
+              )}
+            </Box>
+          </Box>
+          <Box flexDirection="column" flexGrow={1} height="100%" width="70%">
+            <Text>
+              Blocks
+            </Text>
+            <Box borderStyle="single" flexDirection="column">
+              {blocks.map((block, index) =>
+                <Box key={index} paddingX={1} justifyContent="center">
+                  <Text key={block.hash} wrap="truncate">
+                    {block.hash}
+                  </Text>
+                </Box>
+              )}
+            </Box>
+          </Box>
+        </Box>
 
-      {tabs[index]}
-    </>
+        {tabs[index]}
+      </Box>
+    </Box>
   );
 };
 
@@ -73,7 +96,7 @@ const ChooseAction = (props: any) => {
   const handleSelect = (item: any) => {
     switch (item.value) {
       case 'addBlock':
-        Balance.instance.updateEveryBalance();
+        sendEmptyBlock();
         break;
       case 'sendMoney':
         setWallets(nodes.map((node: any) => (
@@ -89,7 +112,7 @@ const ChooseAction = (props: any) => {
 
   const items = [
     {
-      label: 'Add empty block (coming soon)',
+      label: 'Add empty block',
       value: 'addBlock'
     },
     {
@@ -159,6 +182,7 @@ const ChooseAmount = (props: { node: INode, setIndex: any }) => {
 }
 
 if (!process.send) {
+  console.clear();
   runApp();
   render(<UI />);
 }

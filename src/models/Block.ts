@@ -20,7 +20,7 @@ export class Block implements IBlock {
     return hash.digest("hex");
   }
 
-  private get copy() {
+  get copy(): IBlock {
     const copy = JSON.parse(JSON.stringify(this));
     copy.hash = this.hash;
     return copy
@@ -33,7 +33,7 @@ export class Block implements IBlock {
   static isValid(block: Block, temp: IBlock): boolean {
     return (
       block.hash === temp.hash &&
-      block.hash.startsWith('00000') &&
+      block.hash.startsWith('0000') &&
       block.previousHash === Chain.instance.lastHash
     );
   }

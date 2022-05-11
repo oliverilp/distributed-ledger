@@ -6,15 +6,30 @@ import { IBlock } from '../domain/IBlock';
 import { IChain } from '../domain/IChain';
 import { ICoinbase } from '../domain/ICoinbase';
 import { ISignedTransaction } from '../domain/ISignedTransaction';
-import { uiSetBlocks } from '../UI';
+import { logMiningStarted } from '../Logger';
+import { uiSetBlocks, uiSetNodes } from '../UI';
+import { Balance } from './Balance';
 import { Block } from "./Block";
+import { Node } from './Node';
 import Wallet from './Wallet';
 
 export class Chain implements IChain {
-  public static instance = new Chain();
-
+  private static _instance = new Chain();
   private _blocks: Block[] = [];
   private child: cp.ChildProcess | null = null;
+
+  public static get instance() {
+    return this._instance;
+  }
+
+  public static set instance(chain: Chain) {
+    this._instance = chain;
+    Balance.instance.updateEveryBalance();
+    uiSetBlocks(this.instance.blocks);
+    if (Node.instance) {
+      uiSetNodes(Node.instance.knownNodes);
+    }
+  }
 
   get blocks() {
     return this._blocks;
@@ -22,7 +37,11 @@ export class Chain implements IChain {
 
   set blocks(blocks: Block[]) {
     this._blocks = blocks;
+    Balance.instance.updateEveryBalance();
     uiSetBlocks(this.blocks);
+    if (Node.instance) {
+      uiSetNodes(Node.instance.knownNodes);
+    }
   }
 
   get lastHash() {
@@ -42,7 +61,7 @@ export class Chain implements IChain {
     });
   }
 
-  async addBlock(signedTransactionList: ISignedTransaction[]): Promise<Block> {
+  async createBlock(signedTransactionList: ISignedTransaction[]): Promise<Block> {
     const coinbase: ICoinbase = {
       amount: 50,
       receiver: Wallet.instance.publicKey
@@ -54,11 +73,19 @@ export class Chain implements IChain {
       merkleRoot,
       signedTransactionList
     );
-
+    logMiningStarted();
     const minedBlock = await this.mine(block);
 
-    this.blocks = [...this._blocks, minedBlock];
     return minedBlock;
+  }
+
+  addFakeBlock(signedTransactionList: ISignedTransaction[]) {
+    const coinbase: ICoinbase = {
+      amount: 50,
+      receiver: Wallet.instance.publicKey
+    };
+    const block = new Block(this.lastHash, coinbase, '', signedTransactionList);
+    this._blocks = [...this._blocks, block];
   }
 
   // TODO: Reject promise
@@ -68,18 +95,21 @@ export class Chain implements IChain {
     }
   }
 
-  get copy() {
-    const object = JSON.parse(JSON.stringify(this));
-    object.blocks = object._blocks;
-    delete object._blocks;
-    delete object.child;
-    object.lastHash = JSON.parse(JSON.stringify(this.lastHash));
+  get copy(): Chain {
+    const chain = new Chain();
+    chain._blocks = JSON.parse(JSON.stringify(this.blocks));
+    return chain;
+  }
 
-    return object;
+  get copyObject(): IChain {
+    return {
+      blocks: this.blocks.map(block => block.copy),
+      lastHash: this.lastHash
+    }
   }
 
   get json() {
-    return JSON.stringify(this.copy);
+    return JSON.stringify(this.copyObject);
   }
 
   static mapToChainObject(chain: IChain): Chain {

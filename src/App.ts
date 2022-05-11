@@ -8,8 +8,17 @@ import { INode } from "./domain/INode";
 import { Chain } from "./models/Chain";
 import { ISignedTransaction } from "./domain/ISignedTransaction";
 import { IChain } from "./domain/IChain";
-import { uiSetBlocks } from "./UI";
 import TransactionQueue from "./models/TransactionQueue";
+import Transaction from "./models/Transaction";
+import { ICoinbase } from "./domain/ICoinbase";
+import { Block } from "./models/Block";
+import {
+  logAddEmptyNewBlock,
+  logAddNewBlock,
+  logAddNewTransaction,
+  logMiningFinished,
+  logRejectdNewTransaction
+} from "./Logger";
 
 export const ip = "127.0.0.1";
 export let port = 10000;
@@ -68,6 +77,21 @@ export async function sendTransaction(amount: number, receiverPublicKey: string)
 }
 
 export async function collectTransaction(signedTransaction: ISignedTransaction) {
+  const chain = Chain.instance.copy;
+  const coinbase: ICoinbase = {
+    amount: 0,
+    receiver: Wallet.instance.publicKey
+  };
+  const signedTransactionList = [...TransactionQueue.instance.queue, signedTransaction];
+  const block = new Block(Chain.instance.lastHash, coinbase, signedTransactionList);
+  chain.blocks.push(block);
+
+  if (!Transaction.isValid(signedTransaction, chain)) {
+    logRejectdNewTransaction(signedTransaction.transaction.amount);
+    return;
+  }
+  logAddNewTransaction(signedTransaction.transaction.amount);
+
   const { queue } = TransactionQueue.instance;
   queue.push(signedTransaction);
 
@@ -77,8 +101,31 @@ export async function collectTransaction(signedTransaction: ISignedTransaction) 
   }
 }
 
+export async function sendEmptyBlock() {
+  const start = Date.now();
+  const block = await Chain.instance.createBlock([]);
+  Chain.instance.blocks = [...Chain.instance.blocks, block];
+  logMiningFinished(Date.now() - start);
+  logAddEmptyNewBlock(block.hash);
+
+  for (const node of Node.instance.knownNodes) {
+    const url = new URL(`http://${node.ip}:${node.port}/blocks`);
+    const reachable = await isPortReachable(parseInt(url.port), url.hostname);
+    if (reachable) {
+      makePostRequest(url, block.json);
+    }
+  }
+}
+
 export async function sendBlock(signedTransactionList: ISignedTransaction[]) {
-  const block = await Chain.instance.addBlock(signedTransactionList);
+  const start = Date.now();
+  const block = await Chain.instance.createBlock(signedTransactionList);
+
+  if (Block.isValid(block, block)) {
+    Chain.instance.blocks = [...Chain.instance.blocks, block];
+  }
+  logMiningFinished(Date.now() - start);
+  logAddNewBlock(block.hash);
 
   for (const node of Node.instance.knownNodes) {
     const url = new URL(`http://${node.ip}:${node.port}/blocks`);
@@ -92,17 +139,17 @@ export async function sendBlock(signedTransactionList: ISignedTransaction[]) {
 async function syncChainWithNodes() {
   for (const node of Node.instance.knownNodes) {
     const url = new URL(`http://${node.ip}:${node.port}/blocks`);
+    const reachable = await isPortReachable(parseInt(url.port), url.hostname);
+    if (!reachable) continue;
+
     const chain: IChain = JSON.parse(await makeGetRequest(url));
     if (chain.blocks.length > Chain.instance.blocks.length) {
       Chain.instance = Chain.mapToChainObject(chain);
-      uiSetBlocks(Chain.instance.blocks);
     }
   }
 }
 
 export async function runApp() {
-  console.log('Starting app.');
-
   startApi();
   await setTimeout(100);
 
@@ -112,7 +159,6 @@ export async function runApp() {
   }
   if (chain) {
     Chain.instance = Chain.mapToChainObject(chain);
-    uiSetBlocks(Chain.instance.blocks);
   }
 
   Node.instance = new Node(ip, port, Wallet.instance.publicKey);

@@ -44,7 +44,7 @@ export async function getConfig(): Promise<IConfig> {
 export function saveConfig() {
   const data = { 
     knownNodes: Node.instance.knownNodes, 
-    chain: Chain.instance.copy,
+    chain: Chain.instance.copyObject,
     wallet: Wallet.instance
   };
   fs.writeFileSync(getValidLocation(), JSON.stringify(data, null, 4));

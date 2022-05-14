@@ -80,7 +80,8 @@ export async function collectTransaction(signedTransaction: ISignedTransaction) 
   const chain = Chain.instance.copy;
   const signedTransactionList = [...TransactionQueue.instance.queue, signedTransaction];
   
-  chain.createBlock(signedTransactionList, 0);
+  const block = chain.createBlock(signedTransactionList, 0);
+  chain.blocks = [...chain.blocks, block];
 
   if (!Transaction.isValid(signedTransaction, chain)) {
     logRejectdNewTransaction(signedTransaction.transaction.amount);

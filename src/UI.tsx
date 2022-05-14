@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { render, Box, Text, Newline, Spacer } from 'ink';
 import TextInput from 'ink-text-input';
+import SelectInput from 'ink-select-input/build';
 
 import { runApp, sendEmptyBlock, sendTransaction } from './App';
-import SelectInput from 'ink-select-input/build';
 import { INode } from './domain/INode';
 import { Balance } from './models/Balance';
 import Wallet from './models/Wallet';

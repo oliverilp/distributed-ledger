@@ -48,7 +48,7 @@ export class Chain implements IChain {
     return this.blocks[this.blocks.length - 1]?.hash || '';
   }
 
-  async mine(block: Block): Promise<Block> {
+  private async callMiner(block: Block): Promise<Block> {
     this.killChild();
     return new Promise<Block>((resolve, reject) => {
       this.child = cp.fork(path.join(__dirname, '../Miner.js'));
@@ -61,31 +61,32 @@ export class Chain implements IChain {
     });
   }
 
-  async createBlock(signedTransactionList: ISignedTransaction[]): Promise<Block> {
+  createBlock(
+    signedTransactionList: ISignedTransaction[],
+    coinbaseAmount: number = 50
+  ): Block {
     const coinbase: ICoinbase = {
-      amount: 50,
+      amount: coinbaseAmount,
       receiver: Wallet.instance.publicKey
     };
-    const merkleRoot = Chain.computeMerkleRoot(signedTransactionList);
+
+    const merkleRoot =  Chain.computeMerkleRoot(signedTransactionList);
     const block = new Block(
       this.lastHash,
       coinbase,
       merkleRoot,
       signedTransactionList
     );
-    logMiningStarted();
-    const minedBlock = await this.mine(block);
 
-    return minedBlock;
+    return block;
   }
 
-  addFakeBlock(signedTransactionList: ISignedTransaction[]) {
-    const coinbase: ICoinbase = {
-      amount: 50,
-      receiver: Wallet.instance.publicKey
-    };
-    const block = new Block(this.lastHash, coinbase, '', signedTransactionList);
-    this._blocks = [...this._blocks, block];
+  async mineBlock(signedTransactionList: ISignedTransaction[]): Promise<Block> {
+    const block = this.createBlock(signedTransactionList);
+    logMiningStarted();
+    const minedBlock = await this.callMiner(block);
+
+    return minedBlock;
   }
 
   // TODO: Reject promise
@@ -128,6 +129,7 @@ export class Chain implements IChain {
   }
 
   static computeMerkleRoot(signedTransactionList: ISignedTransaction[]): string {
+    if (signedTransactionList.length === 0) return '';
     const hashes = signedTransactionList.map(t => sha256(JSON.stringify(t)));
     return merkleRoot(hashes);
   }

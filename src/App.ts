@@ -78,13 +78,9 @@ export async function sendTransaction(amount: number, receiverPublicKey: string)
 
 export async function collectTransaction(signedTransaction: ISignedTransaction) {
   const chain = Chain.instance.copy;
-  const coinbase: ICoinbase = {
-    amount: 0,
-    receiver: Wallet.instance.publicKey
-  };
   const signedTransactionList = [...TransactionQueue.instance.queue, signedTransaction];
-  const block = new Block(Chain.instance.lastHash, coinbase, signedTransactionList);
-  chain.blocks.push(block);
+  
+  chain.createBlock(signedTransactionList, 0);
 
   if (!Transaction.isValid(signedTransaction, chain)) {
     logRejectdNewTransaction(signedTransaction.transaction.amount);
@@ -103,7 +99,7 @@ export async function collectTransaction(signedTransaction: ISignedTransaction) 
 
 export async function sendEmptyBlock() {
   const start = Date.now();
-  const block = await Chain.instance.createBlock([]);
+  const block = await Chain.instance.mineBlock([]);
   Chain.instance.blocks = [...Chain.instance.blocks, block];
   logMiningFinished(Date.now() - start);
   logAddEmptyNewBlock(block.hash);
@@ -119,7 +115,7 @@ export async function sendEmptyBlock() {
 
 export async function sendBlock(signedTransactionList: ISignedTransaction[]) {
   const start = Date.now();
-  const block = await Chain.instance.createBlock(signedTransactionList);
+  const block = await Chain.instance.mineBlock(signedTransactionList);
 
   if (Block.isValid(block, block)) {
     Chain.instance.blocks = [...Chain.instance.blocks, block];

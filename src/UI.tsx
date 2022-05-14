@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { render, Box, Text, Newline } from 'ink';
+import { render, Box, Text, Newline, Spacer } from 'ink';
 import TextInput from 'ink-text-input';
 
 import { runApp, sendEmptyBlock, sendTransaction } from './App';
@@ -55,11 +55,11 @@ const UI = () => {
       </Text>
       <Box flexDirection="column" marginTop={1}>
         <Box flexDirection="row">
-          <Box flexDirection="column" height="100%" width="30%">
+          <Box flexDirection="column" width="30%">
             <Text>
               Nodes
             </Text>
-            <Box borderStyle="single" flexDirection="column">
+            <Box borderStyle="single" flexDirection="column" flexGrow={1}>
               {nodes.map((node, index) =>
                 <Box key={index} justifyContent="space-between">
                   <Text>{` ${node.ip}:${node.port}`}</Text>
@@ -68,11 +68,11 @@ const UI = () => {
               )}
             </Box>
           </Box>
-          <Box flexDirection="column" flexGrow={1} height="100%" width="70%">
+          <Box flexDirection="column" width="70%">
             <Text>
               Blocks
             </Text>
-            <Box borderStyle="single" flexDirection="column">
+            <Box borderStyle="single" flexDirection="column" flexGrow={1}>
               {blocks.map((block, index) =>
                 <Box key={index} paddingX={1} justifyContent="center">
                   <Text key={block.hash} wrap="truncate">

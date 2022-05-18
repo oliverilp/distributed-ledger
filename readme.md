@@ -14,27 +14,20 @@ npm run dev
 ```
 ## Interaction with the application
 
-Running `npm run dev` will open up an interactive CLI where the following commands can be used:
+Running `npm run dev` will open up an interactive console GUI
 
-* `add`
-
-For example:
+To specify a port add an argument to the end.
 
 ```
-npm run dev                 
+Your balance is 100₿ 
 
-> distributed-ledger@1.0.0 dev
-> tsc && npm run start
-
-
-> distributed-ledger@1.0.0 start
-> node dist/ui.js
-
-Nodes                    Blocks
-┌───────────────────────┐┌──────────────────────────────────────────┐
-│ 127.0.0.1:10000       ││ 138bd89286d9fa9d4124e013d0a9ab49d1ebd49… │
-│ 127.0.0.1:12345       ││ 0005c642dba842f8635194b5de265977fb850f0… │
-│ 127.0.0.1:1200        ││ 96fd3fb70581213fc0ad2fd21f48364097877a2… │
-└───────────────────────┘└──────────────────────────────────────────┘
-Enter a command:  
+Nodes                   Blocks
+┌──────────────────────┐┌─────────────────────────────────────────────────────┐
+│ 127.0.0.1:10000  50₿ ││ 00008bb53ba6d256ea3c40fc3b9584f0cc0670c7b2c58d5f27… │
+│                      ││ 0000be0f9308fb9ea38dde26774e036053d718a54a19833d4d… │
+│                      ││ 00008d26338e9c5b51c95f5b447cf8c61d932190ea87fc15bf… │
+└──────────────────────┘└─────────────────────────────────────────────────────┘
+Choose an action:
+❯ Add empty block
+  Send money
 ```

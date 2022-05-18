@@ -14,7 +14,7 @@ npm run dev
 ```
 ## Interaction with the application
 
-Running `npm run dev` will open up an interactive console GUI
+Running `npm run dev` will open up an interactive console GUI.
 
 To specify a port add an argument to the end.
 
